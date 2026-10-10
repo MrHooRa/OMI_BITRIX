@@ -125,8 +125,8 @@ def field_value(row, path, default=None):
     return value
 
 
-def normalize(row, config):
-    from diwan_columns import display_fields
+def normalize(row, config, detail=False):
+    from diwan_columns import display_fields, detail_fields
     if not isinstance(row, dict) or row.get(config["task_id_field"]) in (None, ""):
         raise DiwanError("missing_task_id")
     request_data = row.get("request") if isinstance(row.get("request"), dict) else {}
@@ -169,7 +169,7 @@ def normalize(row, config):
         "modified_at":row.get("modifiedDate") or request_data.get("modifiedDate"),
         "deadline":row.get("dueDate") or row.get("deadline"), "priority":2 if row.get("isImportant") else 0,
         "tags":[], "fields":fields, "actions":row.get("previousActions") if isinstance(row.get("previousActions"),list) else [],
-        "display_fields": display_fields(row),
+        "display_fields": detail_fields(row) if detail else display_fields(row),
     }
 
 
@@ -246,10 +246,11 @@ class DiwanClient:
                 if self.config.get("detail_url"):
                     raw=self.details(row["id"])
                     raw.setdefault(self.config["task_id_field"],row["id"])
-                    detail=normalize(raw,self.config)
+                    detail=normalize(raw,self.config,detail=True)
                     # Preserve nonempty list metadata if the details endpoint omits it.
                     detail={k:(v if v not in (None,"",[]) else row.get(k,v)) for k,v in detail.items()}
                     detail["completed"]=row["completed"] or detail["completed"]
+                    detail["display_fields"] = {**detail["display_fields"], **row.get("display_fields", {})}
                     enriched.append(detail)
                 else:
                     enriched.append(row)

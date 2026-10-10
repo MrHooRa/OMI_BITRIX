@@ -25,6 +25,14 @@ Optional browser checks: export with `python tests/test_local_history.py --expor
 
 Full discovery after these changes ran 253 tests, with the same three failure reports, three errors and ten skipped semantic checks documented above. No new failures were introduced. Production-scale analysis and live Diwan acceptance remain unverified in this minimal environment.
 
+## Optional Diwany connection and complete columns
+
+Run `python -m unittest discover -s tests -p test_optional_diwan.py -v` and the equivalent command for `test_diwan_catalog.py`. All 22 checks passed on 10 October 2026: navigation without credentials, Bitrix-only operation, retained mutation/CSRF guards, the exact 72-field catalog, nested/form/detail values, secret filtering, token preview isolation, and saved selections larger than 20 columns.
+
+The extended columns browser suite passed in English/Arabic, dark themes and narrow screens. It verifies no automatic token prompt, explicit connection, navigation to column settings after validation, Select all/Clear, persistence and table values. A restarted server returned HTTP 200 for all eight main navigation pages without a Diwany token.
+
+Full discovery ran 275 tests: four failure reports, three errors and ten skipped checks. Besides the previously documented semantic/dependency issues, a notification worker timed out; another notification-suite rerun reported a summary-response error. Both notification checks passed when run together in isolation, indicating intermittent behavior. Full-suite acceptance remains incomplete; the targeted new feature and browser checks passed.
+
 ## Portable release checks
 
 Runtime configuration, credentials, workspaces, caches, exports, private training artifacts and development environments are excluded. Historical user-specific verification notes are omitted from the shareable documentation. Archive checks verify every file against the release SHA-256 inventory and ZIP CRC, both pinned model inventories and offline dependency availability. A fresh isolated configuration is used for the application smoke check.

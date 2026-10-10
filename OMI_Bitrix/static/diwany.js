@@ -57,7 +57,7 @@
     action(event.submitter, '#diwanTokenError', async () => {
       await post('/api/diwany/token', {token: $('#diwanToken').value});
       $('#diwanToken').value = '';
-      location.reload();
+      location.assign('/connections#diwanColumnsSettings');
     });
   });
 
@@ -142,7 +142,6 @@
   }
   if ($('#diwanPage')) {
     list().catch(error => show('#diwanProgress', error.message, true));
-    if ($('#diwanPage').dataset.connected !== '1') openToken();
     $('#diwanFilters').addEventListener('submit', event => {
       event.preventDefault();
       action(event.submitter, '#diwanProgress', async () => {
@@ -374,6 +373,12 @@
     }
     loadColumns().catch(error => show('#diwanColumnsStatus', error.message, true));
     $('#diwanColumnsRefresh').addEventListener('click', event => action(event.currentTarget, '#diwanColumnsStatus', loadColumns));
+    $('#diwanColumnsAll').addEventListener('click', () => {
+      $('#diwanColumnRows').querySelectorAll('[type=checkbox]').forEach(input => { input.checked = true; });
+    });
+    $('#diwanColumnsClear').addEventListener('click', () => {
+      $('#diwanColumnRows').querySelectorAll('[type=checkbox]').forEach(input => { input.checked = false; });
+    });
     $('#diwanColumnsForm').addEventListener('submit', event => {
       event.preventDefault();
       const columns = [...$('#diwanColumnRows').children].filter(row => row.querySelector('[type=checkbox]').checked)

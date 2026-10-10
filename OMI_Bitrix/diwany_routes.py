@@ -6,7 +6,7 @@ import threading
 from datetime import date
 from io import BytesIO
 
-from flask import Blueprint, current_app, g, jsonify, render_template, request, send_file
+from flask import Blueprint, current_app, g, jsonify, render_template, request, send_file, url_for
 from bitrix import BitrixClient
 from diwany import DiwanClient, DiwanError, validate_config, normalize, field_value
 from history import History, bitrix_pages, now, connection_scope
@@ -20,7 +20,7 @@ from sla import evaluate
 from task_intelligence import data_quality, analyze, annotate
 from recommendation_matching import group_related
 from xlsx_report import build_workbook
-from diwan_columns import BUILTINS, columns, validate_columns, value as column_value
+from diwan_columns import BUILTINS, JSON_COLUMNS, display_fields, columns, validate_columns, value as column_value
 from urllib.parse import urlsplit
 
 bp = Blueprint("diwan", __name__)
@@ -129,8 +129,9 @@ def page():
 
 @bp.get("/tasks")
 def tasks():
+    default_source = "diwan" if vault().present(profile()) and not store().get("webhook_url", profile_id=profile()) else "bitrix"
     return render_template("tasks.html", analysis_settings=settings(), recipients=employees(),
-                           default_source="bitrix" if store().get("webhook_url", profile_id=profile()) else "diwan")
+                           default_source=default_source)
 
 
 @bp.get("/connections")
@@ -151,6 +152,7 @@ def save_config():
                 vault().remove(profile())
             history().invalidate(profile())
             history().invalidate(profile(), "diwan_analysis")
+            store().set("diwan_discovered_columns", [], profile_id=profile())
             store().set("diwan_config", candidate, profile_id=profile())
     return jsonify(ok=True)
 
@@ -165,18 +167,21 @@ def save_token():
         if not current:
             raise DiwanError("missing_endpoint", 409)
         # Listing is read-only even for APIs that use POST.
-        DiwanClient(current, token).list_page(page_size=1)
+        preview = DiwanClient(current, token).list_page(page_size=1)
         if vault().get(profile()) != token:
             vault().save(profile(), token)
             history().invalidate(profile())
             history().invalidate(profile(), "diwan_analysis")
-    return jsonify(ok=True)
+        discovered = sorted({key for row in preview for key in display_fields(row)})
+        store().set("diwan_discovered_columns", discovered[:1000], profile_id=profile())
+    return jsonify(ok=True, columns_url=url_for("diwan.connections", _anchor="diwanColumnsSettings"))
 
 
 @bp.delete("/api/diwany/token")
 def remove_token():
     with profile_lock():
         vault().remove(profile())
+        store().set("diwan_discovered_columns", [], profile_id=profile())
         history().invalidate(profile())
         history().invalidate(profile(), "diwan_analysis")
     return jsonify(ok=True)
@@ -227,11 +232,12 @@ def list_columns():
         return jsonify(ok=True)
     lang = store().get("ui_language", "en", profile_id=profile())
     available = [{"key": "task:" + name, "label": get_text(lang, label)} for name, label in BUILTINS]
-    keys = set()
+    keys = set(store().get("diwan_discovered_columns", [], profile_id=profile()))
     for cache in ("diwan", "diwan_analysis"):
         for record in history().source(profile(), cache, copy_records=False)["records"]:
             keys.update(record.get("display_fields", {}))
-    available.extend({"key": "json:" + key, "label": key} for key in sorted(keys)[:1000])
+    available.extend({"key": "json:" + key, "label": key} for key in JSON_COLUMNS)
+    available.extend({"key": "json:" + key, "label": key} for key in sorted(keys - set(JSON_COLUMNS))[:1000])
     return jsonify(ok=True, available=available, selected=columns(store(), profile()), has_json_fields=bool(keys))
 
 
@@ -249,7 +255,8 @@ def details(task_id):
         generation = history().generation(profile())
         data = client().details(task_id)
         data.setdefault(config()["task_id_field"], task_id)
-        row = normalize(data, config())
+        row = normalize(data, config(), detail=True)
+        row["display_fields"] = {**original.get("display_fields", {}), **row["display_fields"]}
         row["request_id"] = row["request_id"] or original["request_id"]
         history().update_record(profile(), "diwan", row, generation)
     return jsonify(ok=True, task=row)

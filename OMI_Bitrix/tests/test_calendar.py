@@ -106,7 +106,7 @@ class CalendarTests(unittest.TestCase):
         self.assertNotIn('id="taskCalendar"', page)
         response = self.http.get("/api/calendar")
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.location.endswith("/diwany"))
+        self.assertTrue(response.location.endswith("/settings#bitrixIdentity"))
         self.bx.assigned_tasks.assert_not_called()
 
     def test_no_calendar_write_endpoint(self):

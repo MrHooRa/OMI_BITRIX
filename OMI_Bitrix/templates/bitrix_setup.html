@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% from "_ui_macros.html" import page_header with context %}
+{% block content %}
+{{ page_header(t(title_key), t('d_bitrix_setup_help')) }}
+{% include '_bitrix_setup_notice.html' %}
+{% endblock %}

@@ -292,6 +292,11 @@ def export_fixtures(output):
     case = ColumnAndCredentialTests()
     case.setUp()
     try:
+        case.post(case.a, "/api/diwany/config", fixtures.CONFIG)
+        for lang in ("en", "ar"):
+            fixtures.main.STORE.set("ui_language", lang, profile_id=case.pid(case.a))
+            (output / f"diwany-disconnected-{lang}.html").write_text(case.a.get("/diwany").get_data(as_text=True), encoding="utf-8")
+            (output / f"dashboard-{lang}.html").write_text(case.a.get("/").get_data(as_text=True), encoding="utf-8")
         case.connect(case.a)
         pid = case.pid(case.a)
         history = fixtures.main.app.extensions["diwan_history"]

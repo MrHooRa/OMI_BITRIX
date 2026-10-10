@@ -55,9 +55,12 @@ Both Bitrix assignment interfaces share live permission checks, uncertain-outcom
 4. Select the actual internal task-ID field and assignee field.
 5. Save; then select **Connect Diwan**.
 6. Enter your own token in the popup and select **Validate & save**.
-7. Open **ديواني** and select **Fetch all pages**.
+7. Column settings open automatically. Select the columns you want, optionally rename their headings, and save.
+8. Open **ديواني** and select **Fetch all pages** when you need Diwan data.
 
-Each browser profile has independent endpoints and a Windows-protected token. Tokens are never returned to HTML or stored in browser localStorage. Changing endpoint configuration removes that profile's saved token and Diwan cache. A failed token replacement preserves the old token.
+Each browser profile has independent endpoints and a Windows-protected token. Tokens are never returned to HTML or stored in browser localStorage. Ordinary endpoint edits keep the token; changing the service host removes it. Connection changes invalidate that profile's Diwan cache. A failed token replacement preserves the old token.
+
+Diwany is optional. All navigation pages open without its token, and Bitrix tasks use their own connection. Pages needing a missing Bitrix connection show a setup link. Only Diwany operations require a Diwany token; opening the page does not prompt for one.
 
 No Diwan URL or token is shipped with the project. Enter the actual endpoints; placeholder examples are not a working connection.
 
@@ -158,7 +161,7 @@ Node is development-only. See the release checklist for measured checks and the 
 
 Open **Tasks & similarity / مهام وتشابه** at `/tasks`. Similar pairs appear automatically after the first history fetch. Use **Find similar** beside any task or enter new task text in the analysis form. Bitrix is selected by default when connected. The page shows indexed counts, last successful refresh, next refresh, and errors. **Refresh selected source now** performs an immediate read-only refresh.
 
-The scheduler fetches all accessible statuses in selected Bitrix projects and unfiltered Diwan history for each connected, signed profile. It runs without an open browser, refreshes every 7,200 seconds, and retries failures after five minutes. Keep the PC and server running. Restart rebuilds the in-memory index immediately; no duplicate task database is stored. Partial/failed refreshes never replace the last successful index. Diwan listing filters do not change the analysis corpus.
+The scheduler fetches all accessible statuses in selected Bitrix projects and unfiltered Diwan history for each connected, signed profile. It runs without an open browser, refreshes every 7,200 seconds, and retries failures after five minutes. Keep the PC and server running. Restart rebuilds the index from the local SQLite snapshot in the background. Partial/failed refreshes never replace the last successful snapshot or index. Diwan listing filters do not change the analysis corpus.
 
 Bitrix recommendation candidates include assignees discovered in task history; configured absence/name values take precedence. Suggestions and duration estimates still require sufficient completed history. The local multilingual model supports cross-language retrieval; lexical normalization and explicit translations supply exact-match support. It does not generate translations or task answers.
 
@@ -179,7 +182,7 @@ Task history is stored in `data/task-history.sqlite3` and reused after restartin
 
 Connect Diwany once: its protected personal token is shared by Diwany and similarity in the same profile. Ordinary settings edits keep it; changing the service host, removing it, or an expired token requires reconnecting.
 
-Use **Diwany → Diwany table columns**, or **Settings → Diwany table columns**, to select up to 20 standard or JSON columns and optionally rename headings. Fetch tasks once to discover JSON fields. Column choices are saved per profile.
+Use **Diwany → Diwany table columns**, or **Settings → Diwany table columns**, to choose standard or JSON columns and optionally rename headings. All 72 requested JSON fields are available before fetching, including `employee.name`, `request.status.nameAr`, `FORM*نوع الطلب`, and `detail_completed*date`. Use **Select all** or **Clear** to adjust the selection. Connecting a token opens these settings automatically. Additional returned fields are discovered from the token preview and fetched tasks; unavailable values stay blank. Column choices are saved per profile.
 
 New task folders use shorter names and `Task.md`; legacy folders and notes remain supported. Windows file operations support extended paths, including nested artifacts. Synchronization scans each employee/project folder once; unchanged history reuses its analysis index.
 

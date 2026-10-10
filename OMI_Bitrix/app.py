@@ -506,11 +506,12 @@ def attach_profile():
             return jsonify(ok=False, code="csrf", error=get_text(current_language(), "d_error_csrf")), 403
 
     allowed = {"setup", "api_test_bitrix", "api_projects", "api_folders",
-               "set_language", "static", "health", "settings", "test_workspace", "favicon", "task_calendar"}
+               "set_language", "static", "health", "settings", "test_workspace", "favicon",
+               "task_calendar", "dashboard", "supervisor_dashboard", "search_dashboard", "task_detail"}
     if request.endpoint and request.endpoint.startswith(("diwan.", "recommendations.")):
         return None
     if request.endpoint and request.endpoint not in allowed and not STORE.configured(pid):
-        return redirect(url_for("diwan.page"))
+        return redirect(url_for("settings") + "#bitrixIdentity")
 
 
 @app.after_request
@@ -703,8 +704,9 @@ def api_folders():
 
 @app.route("/")
 def dashboard():
-    cache = cache_for(profile_id())
-    if not cache["updated_at"]:
+    bitrix_configured = STORE.configured(profile_id())
+    cache = cache_for(profile_id()) if bitrix_configured else empty_cache()
+    if bitrix_configured and not cache["updated_at"]:
         cache = sync_tasks(create_missing=True)
     with CACHE_LOCK:
         assigned = [dict(t) for t in cache.get("assigned", [])]
@@ -718,6 +720,7 @@ def dashboard():
     today_plan = build_today_plan(assigned, setting("workday_start", "08:00"), setting("planner_minutes", 480))
     return render_template(
         "dashboard.html",
+        bitrix_configured=bitrix_configured,
         tasks=visible,
         all_tasks=assigned,
         counts=counts,
@@ -776,6 +779,8 @@ def api_calendar():
 
 @app.route("/search")
 def search_dashboard():
+    if not STORE.configured(profile_id()):
+        return render_template("bitrix_setup.html", title_key="global_search")
     cache = cache_for(profile_id())
     if not cache["updated_at"]:
         cache = sync_tasks(create_missing=False)
@@ -824,6 +829,8 @@ def _hydrate_supervisor_context(tasks, include_access=True):
 
 @app.route("/supervisor")
 def supervisor_dashboard():
+    if not STORE.configured(profile_id()):
+        return render_template("bitrix_setup.html", title_key="team_work")
     cache = cache_for(profile_id())
     if not cache["updated_at"]:
         cache = sync_tasks(create_missing=False)
@@ -911,6 +918,8 @@ def manual_sync():
 
 @app.route("/task/<task_id>")
 def task_detail(task_id):
+    if not STORE.configured(profile_id()):
+        return render_template("bitrix_setup.html", title_key="workspace")
     try:
         task = task_from_cache(task_id, include_supervised=False)
         require_assignee(task)

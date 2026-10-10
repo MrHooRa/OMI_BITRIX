@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
+{% if not bitrix_configured %}
+<header class="ui-page-header page-head">
+  <div><h1>{{ t('my_work') }}</h1><p>{{ t('d_bitrix_setup_help') }}</p></div>
+</header>
+{% include '_bitrix_setup_notice.html' %}
+{% else %}
 <header class="ui-page-header page-head dashboard-head">
   <div><span class="eyebrow">{{ t('delivery_queue') }}</span><h1>{{ t('hero_title') }}</h1><p>{{ user.NAME or '' }} {{ user.LAST_NAME or '' }} · {{ t('selected_projects_count', count=projects|length) }}</p></div>
   <div class="head-actions">
@@ -59,4 +65,5 @@
 </section>
 
 <dialog class="dialog" id="delayDialog"><form method="post" id="delayForm"><div class="dialog-head"><div><span class="eyebrow">{{ t('deadline_justification') }}</span><h3 id="delayTitle">{{ t('why_miss_deadline') }}</h3></div><button type="button" class="dialog-close" data-close-delay>×</button></div><p id="delayDeadline" class="muted"></p><div class="quick-chips"><button type="button" data-justify="{{ t('justify_waiting') }}">{{ t('waiting_input') }}</button><button type="button" data-justify="{{ t('justify_technical') }}">{{ t('technical_blocker') }}</button><button type="button" data-justify="{{ t('justify_scope') }}">{{ t('scope_changed') }}</button><button type="button" data-justify="{{ t('justify_validation') }}">{{ t('validation_needed') }}</button></div><textarea id="delayJustification" name="justification" rows="5" placeholder="{{ t('delay_placeholder') }}" required></textarea><div class="dialog-actions"><button type="button" class="btn secondary" data-close-delay>{{ t('cancel') }}</button><button class="btn primary">{{ t('post_justification') }}</button></div></form></dialog>
+{% endif %}
 {% endblock %}

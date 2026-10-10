@@ -153,20 +153,27 @@ class RecommendationService:
         pid = context["key"].split(":", 1)[0]
         cache = "diwan_analysis" if self.source_name == "diwan" else "bitrix"
         self.history.bind_scope(pid, cache, connection_scope(self.store, pid, self.source_name))
-        source = self.history.source(pid, cache)
+        source = self.history.source(pid, cache, copy_records=False)
         rules = self.store.get("task_domain_rules", [], profile_id=pid)
         version = (source.get("revision") or source["updated_at"], json.dumps(rules, sort_keys=True))
         if version != state["history_version"] or state["prepared"] is None:
+            historical_index = self.history.index(pid, cache)
+            if source["records"] and historical_index is None:
+                if state["prepared"] is None or state.get("warming_version") != version:
+                    state["prepared"] = RelevanceIndex([])
+                    state["warming_version"] = version
+                state["history_complete"] = False
+                state["completed_lookup"] = {}
+                return
             instant = datetime.now(TZ)
             rows = [r for r in source["records"] if r.get("completed") and parse(r.get("completed_at"))
                     and parse(r["completed_at"]) < instant and parse(r.get("created_at"))
                     and parse(r["created_at"]) < parse(r["completed_at"])]
-            historical_index = self.history.index(pid, cache)
             discovered = historical_index.domain_model if historical_index and hasattr(historical_index.domain_model,"topics") else None
             state["prepared"] = RelevanceIndex(rows, domain_rules=rules, domain_model=discovered)
             state["history_version"] = version
+            state["completed_lookup"] = {r["id"]: r for r in state["prepared"].records}
         state["history_complete"] = source["complete"] and not source["error"]
-        state["completed_lookup"] = {r["id"]: r for r in state["prepared"].records}
 
     def task_policy(self, context, state, task):
         return context["policy"]

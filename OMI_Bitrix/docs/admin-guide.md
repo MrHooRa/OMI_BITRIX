@@ -18,6 +18,10 @@ py -3 -m venv .venv
 
 No package index is used by start.bat. Prepare a different target's wheels on an approved connected build machine using that target's Python, then transfer and verify them. wheelhouse/SHA256SUMS.txt records packaged artifact checksums.
 
+## Local history cache
+
+Historical task snapshots are held separately from configuration in `data/task-history.sqlite3` (SQLite WAL). Keep the entire private `data/` directory when upgrading or backing up, with the server stopped. Preserve the signing secret and protected credentials so profiles can reuse their cache. The cache is per profile/source connection; a changed service or token invalidates that source. Cached history does not replace the source's permissions or write verification. Restored indexes prepare in background workers, while saved tasks can be browsed immediately. Large-model cold starts and source refreshes can still take time.
+
 ## Local models (3.7)
 
 The bundled model files total approximately 3.43 GB. `tools/prepare_models.py` verifies their SHA-256 manifest offline; `--download` is an explicit connected build step only. Runtime uses local paths, safetensors and `trust_remote_code=False`. No private task text is sent to a model provider. Preserve each model README and license metadata when packaging. `tools/package_release.py` includes models but excludes their `.cache`, application data, credentials and virtual environments.

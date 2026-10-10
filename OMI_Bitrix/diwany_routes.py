@@ -20,6 +20,8 @@ from sla import evaluate
 from task_intelligence import data_quality, analyze, annotate
 from recommendation_matching import group_related
 from xlsx_report import build_workbook
+from diwan_columns import BUILTINS, columns, validate_columns, value as column_value
+from urllib.parse import urlsplit
 
 bp = Blueprint("diwan", __name__)
 
@@ -28,7 +30,7 @@ def initialize(app, store):
     from diwan_recommendations import DiwanRecommendationService
     app.extensions["diwan_store"] = store
     app.extensions["diwan_vault"] = CredentialVault(store)
-    app.extensions["diwan_history"] = History()
+    app.extensions["diwan_history"] = History(store.db_path.parent / "task-history.sqlite3")
     app.extensions["history_scheduler"] = HistoryScheduler(store, app.extensions["diwan_vault"], app.extensions["diwan_history"])
     app.extensions["diwan_locks"] = {}
     app.extensions["diwan_locks_guard"] = threading.Lock()
@@ -143,7 +145,10 @@ def save_config():
     candidate = validate_config(raw)
     with profile_lock():
         if candidate != config():
-            vault().remove(profile())
+            old_origins = {urlsplit(config()[name + "_url"]).netloc.casefold() for name in ("list", "detail", "delegate") if config().get(name + "_url")}
+            new_origins = {urlsplit(candidate[name + "_url"]).netloc.casefold() for name in ("list", "detail", "delegate") if candidate.get(name + "_url")}
+            if new_origins != old_origins:
+                vault().remove(profile())
             history().invalidate(profile())
             history().invalidate(profile(), "diwan_analysis")
             store().set("diwan_config", candidate, profile_id=profile())
@@ -161,9 +166,10 @@ def save_token():
             raise DiwanError("missing_endpoint", 409)
         # Listing is read-only even for APIs that use POST.
         DiwanClient(current, token).list_page(page_size=1)
-        vault().save(profile(), token)
-        history().invalidate(profile())
-        history().invalidate(profile(), "diwan_analysis")
+        if vault().get(profile()) != token:
+            vault().save(profile(), token)
+            history().invalidate(profile())
+            history().invalidate(profile(), "diwan_analysis")
     return jsonify(ok=True)
 
 
@@ -199,19 +205,38 @@ def job_status(job_id):
 
 @bp.get("/api/diwany/tasks")
 def task_list():
-    snapshot = history().source(profile(), "diwan")
-    rows = snapshot.pop("records")
+    snapshot = history().metadata(profile(), "diwan")
     query = request.args.get("q", "").casefold()
-    if query:
-        rows = [r for r in rows if query in " ".join(str(r.get(k) or "") for k in
-                ("title", "request_id", "id", "category", "assignee_name", "status_label")).casefold()]
     page_number = max(1, int(request.args.get("page", 1)))
-    return jsonify(ok=True, records=rows[(page_number-1)*50:page_number*50],
-                   total=len(rows), page=page_number, coverage=snapshot)
+    rows, total = history().page(profile(), "diwan", page_number, query)
+    selected = columns(store(), profile())
+    labels = dict(BUILTINS)
+    lang = store().get("ui_language", "en", profile_id=profile())
+    selected = [{**column, "label": column["label"] or (get_text(lang, labels[column["key"][5:]])
+                if column["key"].startswith("task:") else column["key"][5:])} for column in selected]
+    rendered = [{**{key: val for key, val in row.items() if key != "display_fields"},
+                 "display_values": [column_value(row, column["key"]) for column in selected]} for row in rows]
+    return jsonify(ok=True, records=rendered, columns=selected, total=total, page=page_number, coverage=snapshot)
+
+
+@bp.route("/api/diwany/columns", methods=["GET", "POST"])
+def list_columns():
+    if request.method == "POST":
+        selected = validate_columns(body().get("columns"))
+        store().set("diwan_columns", selected, profile_id=profile())
+        return jsonify(ok=True)
+    lang = store().get("ui_language", "en", profile_id=profile())
+    available = [{"key": "task:" + name, "label": get_text(lang, label)} for name, label in BUILTINS]
+    keys = set()
+    for cache in ("diwan", "diwan_analysis"):
+        for record in history().source(profile(), cache, copy_records=False)["records"]:
+            keys.update(record.get("display_fields", {}))
+    available.extend({"key": "json:" + key, "label": key} for key in sorted(keys)[:1000])
+    return jsonify(ok=True, available=available, selected=columns(store(), profile()), has_json_fields=bool(keys))
 
 
 def accessible_task(task_id):
-    for record in history().source(profile(), "diwan")["records"]:
+    for record in history().source(profile(), "diwan", copy_records=False)["records"]:
         if record["id"] == task_id:
             return record
     raise DiwanError("not_found", 404)
@@ -356,12 +381,19 @@ def history_sync():
     return jsonify(ok=True, job_id=job), 202
 
 
-def all_records():
-    scheduler().tick(profile())
+def all_records(selected=""):
+    if selected:
+        scheduler().refresh(profile(), selected)
+    else:
+        scheduler().tick(profile())
     records, coverage = [], {}
     for source in ("diwan", "bitrix"):
-        state = history().source(profile(), scheduler().cache_key(source))
+        if selected and source != selected:
+            continue
+        state = history().source(profile(), scheduler().cache_key(source), copy_records=False)
         state["count"] = len(state["records"])
+        state.update({key: value for key, value in history().metadata(profile(), scheduler().cache_key(source)).items()
+                      if key in {"index_ready", "index_error"}})
         state["schedule"] = scheduler().status(profile(), source)
         records.extend(state.pop("records"))
         coverage[source] = state
@@ -370,19 +402,24 @@ def all_records():
 
 @bp.get("/api/intelligence/tags")
 def available_tags():
-    records, _ = all_records()
+    records, _ = all_records("bitrix")
     return jsonify(ok=True, tags=sorted({tag for r in records if r["source"] == "bitrix" for tag in r.get("tags", [])}))
 
 
 @bp.get("/api/intelligence")
 def intelligence():
-    records, coverage = all_records()
+    selected = request.args.get("source", "")
+    if selected not in {"", "bitrix", "diwan"}:
+        raise DiwanError("invalid_input", 400)
+    records, coverage = all_records(selected)
     pairs = []
     selected = request.args.get("source", "")
     for source in ("bitrix", "diwan"):
         if selected and source != selected:
             continue
         index = history().index(profile(), scheduler().cache_key(source))
+        coverage[source].update({key: value for key, value in history().metadata(profile(), scheduler().cache_key(source)).items()
+                                if key in {"index_ready", "index_error"}})
         if index and request.args.get("pairs") == "1":
             if index.preview is None:
                 index.preview = index.examples()
@@ -390,10 +427,21 @@ def intelligence():
     pairs.sort(key=lambda p: -p["match"]["score"])
     selected=request.args.get("source","")
     query=request.args.get("q","").strip().casefold()
-    filtered=[r for r in records if (not selected or r["source"]==selected) and (not query or query in (r["id"]+" "+r["title"]+" "+r.get("assignee_name","")).casefold())]
+    filtered = [] if selected else [r for r in records if not query or query in (r["id"]+" "+r["title"]+" "+r.get("assignee_name","")).casefold()]
     page_number=max(1,int(request.args.get("page",1)))
-    return jsonify(ok=True, pairs=pairs[:8], records=annotate(filtered[(page_number-1)*50:page_number*50], settings()),
-                   filtered_total=len(filtered),page=page_number,quality={s:data_quality([r for r in records if r["source"]==s]) for s in ("bitrix","diwan")},
+    page_rows, total = history().page(profile(), scheduler().cache_key(selected), page_number, query, selected) if selected else (filtered[(page_number-1)*50:page_number*50], len(filtered))
+    quality = current_app.extensions.setdefault("history_quality", {})
+    diagnostics = {}
+    for source in coverage:
+        key = (profile(), source)
+        revision = coverage[source].get("revision")
+        cached = quality.get(key)
+        if not cached or cached[0] != revision:
+            cached = (revision, data_quality([record for record in records if record["source"] == source]))
+            quality[key] = cached
+        diagnostics[source] = cached[1]
+    return jsonify(ok=True, pairs=pairs[:8], records=annotate(page_rows, settings()),
+                   filtered_total=total,page=page_number,quality=diagnostics,
                    total=len(records), coverage=coverage,
                    evaluation=evaluate(records) if request.args.get("evaluate") == "1" else None)
 
@@ -405,7 +453,7 @@ def analyze_task():
     source = str(data.get("source", "diwan"))
     if source not in {"diwan", "bitrix"} or (not text and not data.get("task_id")):
         raise DiwanError("invalid_input", 400)
-    records, coverage = all_records()
+    records, coverage = all_records(source)
     exclude = None
     if data.get("task_id"):
         row = next((r for r in records if r["source"] == source and r["id"] == str(data["task_id"])), None)
@@ -426,6 +474,8 @@ def analyze_task():
         linked_completed = [r for r in prepared.records if r["source"] != source]
     custom_rules = store().get("task_domain_rules", [], profile_id=profile())
     local_index = history().index(profile(), scheduler().cache_key(source))
+    if local_index is None and any(record["source"] == source for record in records):
+        raise DiwanError(history().metadata(profile(), scheduler().cache_key(source)).get("index_error") or "index_building", 409)
     if custom_rules or linked_completed:
         from task_intelligence import TaskIndex
         scoped_rows = [r for r in records if r["source"] == source] + linked_completed

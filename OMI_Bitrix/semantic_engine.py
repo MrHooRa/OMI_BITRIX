@@ -234,7 +234,7 @@ def get_reranker():
 
 class SemanticSpace:
     def __init__(self, records, encoder=None):
-        self.encoder = encoder if encoder is not None else get_encoder()
+        self.encoder = encoder if encoder is not None else (get_encoder() if records else None)
         self.status = "ready" if self.encoder else "unavailable"
         self.records = records
         self.vectors = None

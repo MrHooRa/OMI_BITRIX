@@ -27,7 +27,7 @@ class EmployeeDirectory:
                 continue
             cache = "diwan_analysis" if source == "diwan" else "bitrix"
             self.history.bind_scope(pid, cache, connection_scope(self.store, pid, source))
-            snapshot = self.history.source(pid, cache)
+            snapshot = self.history.source(pid, cache, copy_records=False)
             state = service._state(context)
             # Never acquire another service lock while a caller holds its own.
             # Active arrays are published atomically; source snapshots are copies.

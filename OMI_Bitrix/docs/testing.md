@@ -17,6 +17,14 @@ Run `python -m unittest discover -s tests -p test_calendar.py -v` for nine isola
 
 On 10 October 2026, all nine calendar checks and the browser suite passed. Full discovery ran 237 tests against the merged source and 228 against the untouched `5cb7ee0` baseline in the same minimal environment. Both had identical three failure reports, three errors and ten skipped checks: missing NumPy/PyTorch imports and existing matching/quality cases. The calendar introduced no additional failures. Full semantic acceptance still requires the pinned dependencies and both local models; this check does not claim live Bitrix acceptance.
 
+## Local history, columns and Windows paths
+
+Run `python -m unittest discover -s tests -p test_local_history.py -v`. Sixteen isolated checks cover SQLite restart/pagination/search, connection/profile isolation, failed refresh and disk-full preservation, background index cancellation, unchanged-index reuse, scheduler cache reuse, token retention, JSON-column settings, legacy notes and Windows paths longer than 260 characters. A 1,000-task check verifies one project-directory scan per sync; a 1,000-candidate check verifies one semantic-maximum calculation per query. These operation-count checks do not establish end-to-end latency on a production corpus.
+
+Optional browser checks: export with `python tests/test_local_history.py --export output/columns-fixtures`, set `COLUMNS_FIXTURES` to that directory, and run `node tests/diwan_columns_browser.cjs` with Playwright available. The suite covers English/Arabic, narrow screens, dark themes, saved column headings/values, CSRF headers and no extra token prompts. Both this suite and the calendar browser suite passed on 10 October 2026.
+
+Full discovery after these changes ran 253 tests, with the same three failure reports, three errors and ten skipped semantic checks documented above. No new failures were introduced. Production-scale analysis and live Diwan acceptance remain unverified in this minimal environment.
+
 ## Portable release checks
 
 Runtime configuration, credentials, workspaces, caches, exports, private training artifacts and development environments are excluded. Historical user-specific verification notes are omitted from the shareable documentation. Archive checks verify every file against the release SHA-256 inventory and ZIP CRC, both pinned model inventories and offline dependency availability. A fresh isolated configuration is used for the application smoke check.

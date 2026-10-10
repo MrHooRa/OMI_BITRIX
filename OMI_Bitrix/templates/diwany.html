@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_ui_macros.html" import page_header, section_header with context %}
 {% block content %}
-{% call page_header(t('d_diwan'),t('ui_diwan_search_help')) %}<button class="btn primary" data-token-open>{{ t('d_replace_token') if connected else t('d_connect') }}</button>{% endcall %}
+{% call page_header(t('d_diwan'),t('ui_diwan_search_help')) %}<a class="btn secondary" href="{{ url_for('diwan.connections') }}#diwanColumnsSettings">{{ t('d_columns_title') }}</a><button class="btn primary" data-token-open>{{ t('d_replace_token') if connected else t('d_connect') }}</button>{% endcall %}
 <section id="diwanPage" data-connected="{{ 1 if connected else 0 }}">
   <form id="diwanFilters" class="panel ui-source-toolbar">
     <div class="ui-list-search"><label for="diwanSearch">{{ t('d_search') }}</label><input id="diwanSearch" type="search"></div>

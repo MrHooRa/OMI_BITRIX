@@ -39,8 +39,8 @@ Manually verify affected workflows, both languages, themes, and narrow screens. 
 
 ## Commit & Pull Request Guidelines
 
-This checkout contains no Git metadata, so commit conventions cannot be inferred. Use concise imperative subjects, such as `Fix planner allocation`. PRs should describe behavior changes, link relevant issues, list validation and limitations, and include screenshots for UI changes.
+Use concise imperative subjects, such as `Fix planner allocation`. PRs should describe behavior changes, link relevant issues, list validation and limitations, and include screenshots for UI changes.
 
 ## Security & Configuration
 
-Never commit webhook URLs or `data/cockpit.sqlite3`. Set `WORK_COCKPIT_SECRET` for deployment; configure `HOST` and `PORT` deliberately. Browser profiles are not authentication. Keep SQLite configuration-only, respect per-task Bitrix permissions, and never overwrite existing task workspaces.
+Never commit webhook URLs or `data/`. Configuration lives in `cockpit.sqlite3`; historical task snapshots live in `task-history.sqlite3`, scoped to profile and source connection. Sources remain authoritative. Set `WORK_COCKPIT_SECRET` for deployment; configure `HOST` and `PORT` deliberately. Browser profiles are not authentication. Respect per-task permissions and never overwrite existing workspaces.

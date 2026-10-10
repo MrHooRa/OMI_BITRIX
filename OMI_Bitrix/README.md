@@ -173,6 +173,16 @@ There is no maximum task count for recommendation eligibility. Workload is a sof
 Text matching shares one local index between similarity and recommendations. Ticket identifiers, URLs and synthetic boilerplate do not establish relevance. Identical content is grouped for display with all original IDs preserved. Completed evidence, open-work exposure and manual choices remain distinct. Ranking combines pretrained local semantic models with inspectable scoring rules; it is not calibrated as a probability of success or trained on organisational outcomes.
 
 
+## Local history and Diwany columns
+
+Task history is stored in `data/task-history.sqlite3` and reused after restarting the app. Opening similarity uses the saved snapshot; the existing two-hour background refresh and manual history refresh keep it current. Restored analysis indexes prepare in the background. Failed refreshes retain the last successful snapshot. Changing a source connection clears only its profile-scoped cache.
+
+Connect Diwany once: its protected personal token is shared by Diwany and similarity in the same profile. Ordinary settings edits keep it; changing the service host, removing it, or an expired token requires reconnecting.
+
+Use **Diwany → Diwany table columns**, or **Settings → Diwany table columns**, to select up to 20 standard or JSON columns and optionally rename headings. Fetch tasks once to discover JSON fields. Column choices are saved per profile.
+
+New task folders use shorter names and `Task.md`; legacy folders and notes remain supported. Windows file operations support extended paths, including nested artifacts. Synchronization scans each employee/project folder once; unchanged history reuses its analysis index.
+
 ## Recommendation release 3.1
 
 - Unified source selector, assignment queue search/sort, task brief, candidate selection, read-only evidence dialog and decision log. Colors, typography and local assets remain unchanged.

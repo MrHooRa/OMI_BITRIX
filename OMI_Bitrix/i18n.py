@@ -2113,6 +2113,32 @@ TRANSLATIONS["ar"]["d_r_status_snapshot_changed"] = "تغيرت البيانات
 
 # Automatically generated assignment notifications.
 TRANSLATIONS["en"].update({
+    "d_columns_title": "Diwany table columns",
+    "d_columns_search": "Search columns", "d_column_assignee": "Assigned to",
+    "d_columns_help": "Select up to 20 columns and optionally rename their headings. JSON fields come from your saved tasks. Changes apply to your Diwany table.",
+    "d_columns_reload": "Reload available columns",
+    "d_column_label": "Optional column heading",
+    "d_preparing_history": "Saved tasks are available. Preparing the analysis index in the background…",
+    "d_columns_fetch_hint": "Fetch Diwany tasks once to discover fields from their JSON. Standard columns are available now.",
+    "d_created": "Created", "d_completed": "Completed", "d_due": "Deadline",
+    "d_error_index_building": "Your saved history is being prepared for analysis. Please try again shortly.",
+    "d_error_cache_write_failed": "Could not save the history locally. Your previous saved history is still available.",
+    "d_error_index_failed": "Could not prepare the saved history for analysis. Refresh history to retry.",
+})
+TRANSLATIONS["ar"].update({
+    "d_columns_title": "أعمدة جدول ديواني",
+    "d_columns_search": "البحث في الأعمدة", "d_column_assignee": "الموظف المسند إليه",
+    "d_columns_help": "اختر حتى ٢٠ عمودًا ويمكنك تغيير عناوينها. حقول JSON مأخوذة من مهامك المحفوظة. تطبق التغييرات على جدول ديواني الخاص بك.",
+    "d_columns_reload": "تحديث الأعمدة المتاحة",
+    "d_column_label": "عنوان اختياري للعمود",
+    "d_preparing_history": "المهام المحفوظة متاحة. جارٍ تجهيز فهرس التحليل في الخلفية…",
+    "d_columns_fetch_hint": "اجلب مهام ديواني مرة واحدة لإظهار حقول JSON. الأعمدة الأساسية متاحة الآن.",
+    "d_created": "تاريخ الإنشاء", "d_completed": "تاريخ الإنجاز", "d_due": "الموعد النهائي",
+    "d_error_index_building": "جارٍ تجهيز السجل المحفوظ للتحليل. يرجى المحاولة بعد قليل.",
+    "d_error_cache_write_failed": "تعذر حفظ السجل محليًا. لا يزال السجل السابق متاحًا.",
+    "d_error_index_failed": "تعذر تجهيز السجل المحفوظ للتحليل. حدّث السجل لإعادة المحاولة.",
+})
+TRANSLATIONS["en"].update({
     "d_r_auto_candidate": "Suggested employee: {name}",
     "d_r_auto_reason": "Evidence from similar completed tasks ({completed}). Current assigned open tasks: {active}.",
     "d_r_auto_pending": "Analysing the task to suggest an employee…",

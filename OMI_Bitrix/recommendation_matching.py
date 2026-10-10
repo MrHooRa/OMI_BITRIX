@@ -300,6 +300,9 @@ class RelevanceIndex:
                 possible.update(int(i) for i in (semantic_scores >= semantic_floor).nonzero()[0])
         matches = []
         method = self.model_summary()["id"]
+        semantic_peak = float(semantic_scores.max()) if semantic_scores is not None else None
+        qtopics = {t["id"] for t in query_labels if t["type"] in {"BUSINESS_DOMAIN", "SYSTEM_OR_TOOL", "CONCEPT"}}
+        query_actions = {t["id"] for t in query_labels if t["type"] == "TASK_TYPE"}
         tool_words = set().union(*(terms(t["ar"] + " " + t["en"]) for t in query_labels if t["type"] == "SYSTEM_OR_TOOL"))
         for index in possible:
             row, words = self.records[index], self.words[index]
@@ -312,12 +315,11 @@ class RelevanceIndex:
                              max(.001,qnorm*norm) for field,norm in zip(self.field_vectors[index],self.field_norms[index])]
             text_score = max(cosine, .85*field_cosines[0]+.15*field_cosines[1])
             bm25 = self.bm25(index, counts)
-            qtopics = {t["id"] for t in query_labels if t["type"] in {"BUSINESS_DOMAIN", "SYSTEM_OR_TOOL", "CONCEPT"}}
             rtopics = {t["id"] for t in self.labels[index] if t["type"] in {"BUSINESS_DOMAIN", "SYSTEM_OR_TOOL", "CONCEPT"}}
             concept = len(qtopics & rtopics) / max(1, len(qtopics | rtopics))
             # Concept-only retrieval requires a real domain, never just Excel.
             semantic_cosine = float(semantic_scores[index]) if semantic_scores is not None else None
-            semantic_strong = semantic_cosine is not None and semantic_cosine >= semantic_floor and semantic_cosine >= float(semantic_scores.max()) - (.10 if verifier else .05)
+            semantic_strong = semantic_cosine is not None and semantic_cosine >= semantic_floor and semantic_cosine >= semantic_peak - (.10 if verifier else .05)
             if not shared and not (query_domains & row_domains) and not semantic_strong:
                 continue
             subject_coverage = 0
@@ -327,7 +329,6 @@ class RelevanceIndex:
             if not semantic_strong and (not subject_overlap or subject_coverage < .5):
                 continue
             combined = .65*text_score + .15*bm25 + .2*concept if qtopics and rtopics else .85*text_score + .15*bm25
-            query_actions = {t["id"] for t in query_labels if t["type"] == "TASK_TYPE"}
             row_actions = {t["id"] for t in self.labels[index] if t["type"] == "TASK_TYPE"}
             action_coverage = len(query_actions & row_actions)/len(query_actions) if query_actions else 1
             # Missing source detail is not an explicit contradictory work type.

@@ -30,7 +30,7 @@
 {% macro settings_navigation(current) -%}
 <nav class="ui-settings-nav ui-settings-tree" aria-label="{{ t('ui_settings_nav') }}">
   {% set groups = [
-    ('ui_connections', [('connections','endpointForm','ui_diwan_connection'),('settings','bitrixIdentity','ui_bitrix_connection')]),
+    ('ui_connections', [('connections','endpointForm','ui_diwan_connection'),('settings','bitrixIdentity','ui_bitrix_connection'),('connections','diwanColumnsSettings','d_columns_title')]),
     ('ui_workspace_group', [('settings','bitrixWorkspace','ui_workspace_storage'),('settings','bitrixProjects','ui_projects'),('settings','bitrixSchedule','ui_schedule')]),
     ('ui_analysis_group', [('connections','recipientsSettings','d_directory_title'),('connections','taskUnderstandingSettings','d_domain_title'),('connections','rulesSettings','ui_analysis_rules')])
   ] %}

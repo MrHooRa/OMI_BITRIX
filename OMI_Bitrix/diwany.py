@@ -126,6 +126,7 @@ def field_value(row, path, default=None):
 
 
 def normalize(row, config):
+    from diwan_columns import display_fields
     if not isinstance(row, dict) or row.get(config["task_id_field"]) in (None, ""):
         raise DiwanError("missing_task_id")
     request_data = row.get("request") if isinstance(row.get("request"), dict) else {}
@@ -168,6 +169,7 @@ def normalize(row, config):
         "modified_at":row.get("modifiedDate") or request_data.get("modifiedDate"),
         "deadline":row.get("dueDate") or row.get("deadline"), "priority":2 if row.get("isImportant") else 0,
         "tags":[], "fields":fields, "actions":row.get("previousActions") if isinstance(row.get("previousActions"),list) else [],
+        "display_fields": display_fields(row),
     }
 
 

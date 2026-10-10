@@ -47,8 +47,11 @@ class HistoryScheduler:
             self.history.bind_scope(pid, cache, connection_scope(self.store, pid, source))
             entry = self.entries.get(key)
             if not entry or entry["fingerprint"] != fingerprint:
-                self.history.invalidate(pid, cache)
-                entry = {"fingerprint": fingerprint, "next": 0, "job_id": None,
+                if entry:
+                    self.history.invalidate(pid, cache)
+                saved = self.history.metadata(pid, cache)
+                refreshed = datetime.fromisoformat(saved["updated_at"]).timestamp() if saved.get("updated_at") else 0
+                entry = {"fingerprint": fingerprint, "next": refreshed + INTERVAL_SECONDS if saved.get("complete") else 0, "job_id": None,
                          "error": None, "handled": None}
                 self.entries[key] = entry
             if config is None:

@@ -21,6 +21,11 @@
 <div class="d-toolbar"><button class="btn primary">{{ t('d_save') }}</button><button type="button" class="btn secondary" data-token-open>{{ t('d_replace_token') if connected else t('d_connect') }}</button>{% if connected %}<button type="button" class="btn danger" id="removeDiwanToken">{{ t('d_remove_token') }}</button>{% endif %}</div>
 <p id="endpointStatus" role="status"></p>
 </form>
+<section id="diwanColumnsSettings" class="panel d-pad" data-ui-section>
+<h2>{{ t('d_columns_title') }}</h2><p class="help">{{ t('d_columns_help') }}</p>
+<label>{{ t('d_columns_search') }}<input id="diwanColumnSearch" type="search"></label>
+<form id="diwanColumnsForm"><div id="diwanColumnRows"></div><div class="d-toolbar"><button class="btn primary">{{ t('d_save') }}</button><button type="button" id="diwanColumnsRefresh" class="btn secondary">{{ t('d_columns_reload') }}</button></div><p id="diwanColumnsStatus" role="status" aria-live="polite"></p></form>
+</section>
 <section id="recipientsSettings" class="panel d-pad" data-ui-section>
 <h2>{{ t('d_directory_title') }}</h2><p class="help">{{ t('d_directory_help') }}</p>
 <p id="directorySources" class="help"></p>

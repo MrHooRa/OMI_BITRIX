@@ -109,11 +109,11 @@
     const data = await api('/api/diwany/tasks?page=' + page + '&q=' + encodeURIComponent(q));
     const target = $('#diwanRows'); target.replaceChildren();
     if (!data.records.length) target.append(node('p', t('empty'), 'd-pad'));
-    else target.append(table([t('request_id'), t('task_id'), t('category'), t('status'), t('recipients'), ''],
+    else target.append(table([...data.columns.map(column => column.label), ''],
       data.records.map(row => {
         const button = node('button', t('details'), 'btn secondary');
         button.addEventListener('click', () => action(button, '#diwanProgress', () => details(row.id)));
-        return [row.request_id, row.id, row.title, row.status_label, row.assignee_name || row.assignee_id, button];
+        return [...row.display_values, button];
       })));
     show('#diwanCount', t('count') + ': ' + data.total);
     show('#diwanPageNumber', String(page));
@@ -271,9 +271,10 @@
           ' · ' + t('last_refresh') + ': ' + localTime(value.updated_at) +
           (schedule.enabled ? ' · ' + t('next_refresh') + ': ' + localTime(schedule.next_run_at) : '');
         coverage.append(node('p', message, 'd-note'));
-        if (value.error || schedule.error) coverage.append(node('p', t('error_' + (value.error || schedule.error)), 'd-error'));
+        if (value.error || schedule.error || value.index_error) coverage.append(node('p', t('error_' + (value.error || schedule.error || value.index_error)), 'd-error'));
+        else if (value.complete && value.count && !value.index_ready) coverage.append(node('p', t('preparing_history'), 'help'));
       });
-      const version = JSON.stringify([source,Boolean($('#similarityExamples').open),historyPage,$('#historySearch').value,Object.values(data.coverage).map(value => [value.updated_at, value.count])]);
+      const version = JSON.stringify([source,Boolean($('#similarityExamples').open),historyPage,$('#historySearch').value,Object.values(data.coverage).map(value => [value.updated_at, value.count, value.index_ready])]);
       if (version !== intelligenceVersion) {
       intelligenceVersion = version;
       const pairs = $('#similarityPairs'); pairs.replaceChildren();
@@ -352,6 +353,37 @@
     $(target).append(row);
   }
   if ($('#connectionsPage')) {
+    async function loadColumns() {
+      const result = await api('/api/diwany/columns');
+      const selected = new Map(result.selected.map(column => [column.key, column.label]));
+      const choices = new Map(result.available.map(column => [column.key, column]));
+      result.selected.forEach(column => { if (!choices.has(column.key)) choices.set(column.key, column); });
+      const rows = $('#diwanColumnRows'); rows.replaceChildren();
+      const ordered = [...result.selected.map(column => choices.get(column.key)), ...[...choices.values()].filter(column => !selected.has(column.key))];
+      ordered.forEach(column => {
+        const row = node('div', undefined, 'd-column-choice');
+        const label = node('label'), checkbox = node('input');
+        checkbox.type = 'checkbox'; checkbox.value = column.key; checkbox.checked = selected.has(column.key);
+        label.append(checkbox, document.createTextNode(column.label || column.key));
+        const name = node('input'); name.value = selected.get(column.key) || ''; name.maxLength = 80;
+        name.placeholder = t('column_label'); name.setAttribute('aria-label', t('column_label') + ': ' + column.key);
+        row.dataset.columnKey = column.key;
+        row.append(label, name); rows.append(row);
+      });
+      show('#diwanColumnsStatus', result.has_json_fields ? '' : t('columns_fetch_hint'));
+    }
+    loadColumns().catch(error => show('#diwanColumnsStatus', error.message, true));
+    $('#diwanColumnsRefresh').addEventListener('click', event => action(event.currentTarget, '#diwanColumnsStatus', loadColumns));
+    $('#diwanColumnsForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const columns = [...$('#diwanColumnRows').children].filter(row => row.querySelector('[type=checkbox]').checked)
+        .map(row => ({key: row.dataset.columnKey, label: row.querySelector('input:not([type=checkbox])').value.trim()}));
+      action(event.submitter, '#diwanColumnsStatus', async () => { await post('/api/diwany/columns', {columns}); show('#diwanColumnsStatus', t('saved')); });
+    });
+    $('#diwanColumnSearch').addEventListener('input', event => {
+      const query = event.target.value.trim().toLocaleLowerCase();
+      [...$('#diwanColumnRows').children].forEach(row => { row.hidden = !row.textContent.toLocaleLowerCase().includes(query); });
+    });
     const data = JSON.parse($('#connectionData').textContent);
     const tagOptions = node('datalist'); tagOptions.id = 'diwanTagOptions'; document.body.append(tagOptions);
     api('/api/intelligence/tags').then(result => result.tags.forEach(tag => {

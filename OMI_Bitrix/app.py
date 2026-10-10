@@ -33,6 +33,8 @@ from similarity import attach_similarities, search_tasks
 from storage import ConfigStore
 from team_registry import folder_name as registry_folder_name, register as register_employee
 from workspace import (
+    filesystem_path,
+    note_path,
     count_artifacts,
     ensure_workspace,
     move_workspace,
@@ -154,13 +156,16 @@ def employee_folder_for_task(task, pid=None):
     return registry_folder_name(root, uid, fallback) if root else fallback
 
 
-def workspace_paths(task, pid=None, create=False):
+def workspace_paths(task, pid=None, create=False, directory_cache=None):
     pid = pid or profile_id()
     root = workspace_root(pid)
     emp = task.get("workspaceEmployee") or employee_folder_for_task(task, pid)
-    folder = task_folder(root, task["projectName"], task, emp)
-    if create or folder.exists():
-        return ensure_workspace(root, task["projectName"], task, current_language(pid), emp)
+    folder = task_folder(root, task["projectName"], task, emp, directory_cache)
+    if create:
+        return ensure_workspace(root, task["projectName"], task, current_language(pid), emp, folder=folder)
+    if filesystem_path(folder).exists():
+        note = note_path(folder)
+        return {"folder": folder, "note": note if filesystem_path(note).exists() else None, "vault_root": Path(root)}
     return {"folder": folder, "note": None, "vault_root": Path(root)}
 
 
@@ -193,7 +198,7 @@ def task_is_late(task):
     return task.get("dueBucket") == "overdue"
 
 
-def enrich_task(task, projects, names, pid, create_missing=False):
+def enrich_task(task, projects, names, pid, create_missing=False, directory_cache=None, employee_cache=None):
     task = dict(task)
     task["projectName"] = project_name(task.get("groupId"), projects)
     responsible_id = str(task.get("responsibleId") or "")
@@ -203,7 +208,12 @@ def enrich_task(task, projects, names, pid, create_missing=False):
     task["isAssignee"] = "assignee" in roles
     task["isCreator"] = "creator" in roles
     task["isObserver"] = "observer" in roles
-    task["workspaceEmployee"] = employee_folder_for_task(task, pid)
+    if employee_cache is not None:
+        if responsible_id not in employee_cache:
+            employee_cache[responsible_id] = employee_folder_for_task(task, pid)
+        task["workspaceEmployee"] = employee_cache[responsible_id]
+    else:
+        task["workspaceEmployee"] = employee_folder_for_task(task, pid)
 
     should_create = bool(
         create_missing
@@ -211,8 +221,8 @@ def enrich_task(task, projects, names, pid, create_missing=False):
         and str(task.get("status")) != "5"
         and setting("auto_scaffold", True, pid)
     )
-    paths = workspace_paths(task, pid, create=should_create)
-    task["workspaceExists"] = Path(paths["folder"]).exists()
+    paths = workspace_paths(task, pid, create=should_create, directory_cache=directory_cache)
+    task["workspaceExists"] = filesystem_path(paths["folder"]).exists()
     task["folder"] = str(paths["folder"])
     task["note"] = str(paths["note"]) if paths.get("note") else ""
     task["readiness"] = readiness(read_fields(paths["note"])) if paths.get("note") else 0
@@ -281,8 +291,11 @@ def sync_tasks(create_missing=True, pid=None):
         member_names.update(bx.users_by_ids(missing))
         member_names[user_id] = display_user_name(user) or employee_name(pid)
 
-        assigned = [enrich_task(t, projects, member_names, pid, create_missing=create_missing) for t in assigned_raw]
-        supervised = [enrich_task(t, projects, member_names, pid, create_missing=False) for t in supervised_raw]
+        directory_cache, employee_cache = {}, {}
+        assigned = [enrich_task(t, projects, member_names, pid, create_missing=create_missing,
+                               directory_cache=directory_cache, employee_cache=employee_cache) for t in assigned_raw]
+        supervised = [enrich_task(t, projects, member_names, pid, create_missing=False,
+                                 directory_cache=directory_cache, employee_cache=employee_cache) for t in supervised_raw]
 
         upcoming = [t for t in assigned if t.get("dueBucket") in {"today", "soon", "later"}]
         related_pairs = attach_similarities(upcoming, upcoming, threshold=40, max_per_task=3)

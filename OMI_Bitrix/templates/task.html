@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="ui-page-header page-head task-page-head">
+  <div>
+    <a href="{{ url_for('dashboard') }}" class="back-link">{{ t('back_dashboard') }}</a>
+    <div class="task-meta"><span class="project-pill">{{ task.projectName }}</span><span dir="ltr">Bitrix #{{ task.id }}</span>{% if task.status|string=='3' %}<span class="status-badge ok">{{ t('in_progress') }}</span>{% elif task.status|string=='2' %}<span class="status-badge neutral">{{ t('waiting') }}</span>{% endif %}</div>
+    <h1>{{ task.title }}</h1>
+    <p>{{ task.deadline or t('no_deadline') }}</p>
+  </div>
+  <div class="head-actions">
+    <a class="btn secondary" href="{{ url_for('recommendations.page', task=task.id) }}">{{ t('d_r_rank') }}</a>
+    {% if task.status|string not in ['3','4','5'] %}<form method="post" action="{{ url_for('start_task', task_id=task.id) }}"><button class="btn primary">{{ t('start_in_bitrix') }}</button></form>{% elif task.status|string=='3' and task.dueBucket in ['soon','later','no-deadline'] %}<form method="post" action="{{ url_for('pause_task', task_id=task.id) }}"><button class="btn secondary pause-btn" title="{{ t('pause_future_hint') }}">{{ t('pause_in_bitrix') }}</button></form>{% endif %}
+    <form method="post" action="{{ url_for('open_workspace', task_id=task.id) }}"><button class="btn secondary">{{ t('open_task_folder') }}</button></form>
+    <a class="btn secondary" href="{{ url_for('open_obsidian', task_id=task.id) }}">{{ t('open_obsidian') }}</a>
+  </div>
+</header>
+
+<div class="detail-grid">
+  <section class="panel doc-panel">
+    <div class="section-title"><div><span class="eyebrow">{{ t('documentation') }}</span><h2>{{ t('document_before_close') }}</h2></div><div class="score-badge"><strong>{{ task.readiness }}%</strong><span>{{ t('ready') }}</span></div></div>
+    <form method="post" action="{{ url_for('update_documentation', task_id=task.id) }}" class="doc-form">
+      <label>{{ t('objective') }}<textarea name="objective" rows="3">{{ values.objective }}</textarea></label>
+      <label>{{ t('work_performed') }}<textarea name="work_done" rows="5">{{ values.work_done }}</textarea></label>
+      <label>{{ t('queries_logic') }}<textarea name="queries" rows="4">{{ values.queries }}</textarea></label>
+      <label>{{ t('validation') }}<textarea name="validation" rows="4">{{ values.validation }}</textarea></label>
+      <label>{{ t('result_deliverables') }}<textarea name="result" rows="4">{{ values.result }}</textarea></label>
+      <label>{{ t('next_handover') }}<textarea name="next_step" rows="3">{{ values.next_step }}</textarea></label>
+      <div class="action-row"><button class="btn primary">{{ t('save_documentation') }}</button></div>
+    </form>
+  </section>
+
+  <aside class="right-stack">
+    <section class="panel compact-panel">
+      <span class="eyebrow">{{ t('workspace') }}</span>
+      <h3>{{ t('artifact_pulse') }}</h3>
+      <div class="artifact-list">
+        <div><span>{{ t('input') }}</span><strong>{{ task.artifacts['01_Input'] }}</strong></div>
+        <div><span>{{ t('workflow') }}</span><strong>{{ task.artifacts['02_Workflow'] }}</strong></div>
+        <div><span>{{ t('queries') }}</span><strong>{{ task.artifacts['03_Queries'] }}</strong></div>
+        <div><span>{{ t('output') }}</span><strong>{{ task.artifacts['04_Output'] }}</strong></div>
+        <div><span>{{ t('evidence') }}</span><strong>{{ task.artifacts['05_Evidence'] }}</strong></div>
+      </div>
+      <div class="path-box"><span>{{ t('shared_vault') }}</span><code dir="ltr">{{ paths.vault_root }}</code></div>
+      <div class="path-box"><span>{{ t('task_folder_in_vault') }}</span><code dir="ltr">{{ paths.folder }}</code></div>
+      <div class="path-box"><span>{{ t('task_note') }}</span><code dir="ltr">{{ paths.note }}</code></div>
+    </section>
+
+    <section class="panel compact-panel">
+      <span class="eyebrow">{{ t('quick_update') }}</span>
+      <h3>{{ t('keep_deadline_visible') }}</h3>
+      <form method="post" action="{{ url_for('task_message', task_id=task.id) }}">
+        <textarea name="message" rows="5" placeholder="{{ t('quick_update_placeholder') }}" required></textarea>
+        <div class="quick-chips vertical"><button type="button" data-fill="{{ t('msg_in_progress') }}">{{ t('quick_in_progress') }}</button><button type="button" data-fill="{{ t('msg_blocked') }}">{{ t('quick_blocked') }}</button><button type="button" data-fill="{{ t('msg_more_time') }}">{{ t('quick_more_time') }}</button></div>
+        <button class="btn secondary full-btn">{{ t('post_update') }}</button>
+      </form>
+    </section>
+
+    {% if task.dueBucket in ['today', 'overdue'] %}
+    <section class="panel compact-panel deadline-card {% if task.justificationRequired %}needs-attention{% endif %}">
+      <span class="eyebrow">{{ t('deadline_control') }}</span>
+      <h3>{% if task.dueBucket == 'overdue' %}{{ t('deadline_passed') }}{% else %}{{ t('cant_finish_today') }}{% endif %}</h3>
+      {% if task.hasDelayJustification %}
+      <p class="ok-text">{{ t('justification_already') }}</p>
+      {% else %}
+      <p>{% if task.dueBucket == 'overdue' %}{{ t('overdue_requires_justification') }}{% else %}{{ t('today_justify_early') }}{% endif %}</p>
+      {% endif %}
+      <button type="button" class="btn secondary full-btn delay-trigger" data-task="{{ task.id }}" data-title="{{ task.title|e }}" data-deadline="{{ task.deadline or '' }}" data-justified="{{ 1 if task.hasDelayJustification else 0 }}" {% if task.justificationRequired %}data-auto-open="1"{% endif %}>{% if task.hasDelayJustification %}{{ t('update_justification') }}{% elif task.dueBucket == 'overdue' %}{{ t('add_required_justification') }}{% else %}{{ t('cant_finish_before_deadline') }}{% endif %}</button>
+    </section>
+    {% endif %}
+
+    <section class="panel compact-panel completion-card">
+      <span class="eyebrow">{{ t('finish') }}</span>
+      <h3>{{ t('finish_flow') }}</h3>
+      <p>{{ t('finish_copy') }}</p>
+      <form method="post" action="{{ url_for('complete_task', task_id=task.id) }}"><button class="btn primary full-btn" {% if task.readiness < 100 %}title="{{ t('finish_docs_first') }}"{% endif %}>{{ t('complete_in_bitrix') }}</button></form>
+      {% if task.readiness < 100 %}<small class="muted">{{ t('required_fields') }}</small>{% endif %}
+    </section>
+  </aside>
+</div>
+<dialog id="delayDialog" class="dialog">
+  <form method="post" id="delayForm">
+    <div class="dialog-head"><div><span class="eyebrow">{{ t('deadline_justification') }}</span><h3 id="delayTitle">{{ t('why_miss_deadline') }}</h3></div><button type="button" class="dialog-close" data-close-delay>×</button></div>
+    <p class="dialog-copy">{{ t('task_delay_copy') }}</p>
+    <div class="deadline-context" id="delayDeadline"></div>
+    <textarea name="justification" id="delayJustification" rows="6" minlength="10" placeholder="{{ t('delay_placeholder') }}" required></textarea>
+    <div class="quick-chips"><button type="button" data-justify="{{ t('justify_waiting') }}">{{ t('waiting_input') }}</button><button type="button" data-justify="{{ t('justify_technical') }}">{{ t('technical_blocker') }}</button><button type="button" data-justify="{{ t('justify_scope') }}">{{ t('scope_changed') }}</button><button type="button" data-justify="{{ t('justify_validation') }}">{{ t('validation_needed') }}</button></div>
+    <div class="dialog-actions"><button type="button" class="btn ghost" data-close-delay>{{ t('cancel') }}</button><button class="btn primary">{{ t('post_justification') }}</button></div>
+  </form>
+</dialog>
+{% endblock %}

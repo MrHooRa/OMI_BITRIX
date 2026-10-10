@@ -1,0 +1,12 @@
+<dialog id="diwanTokenDialog" class="d-dialog" aria-labelledby="diwanTokenTitle">
+  <form id="diwanTokenForm">
+    <h2 id="diwanTokenTitle">{{ t('d_token_title') }}</h2>
+    <p>{{ t('d_token_help') }}</p>
+    {% if not diwan_endpoint_ready %}<p>{{ t('d_endpoint_help') }} <a href="{{ url_for('diwan.connections') }}">{{ t('d_open_settings') }}</a></p>{% endif %}
+    <label for="diwanToken">{{ t('d_token') }}</label>
+    <div class="d-toolbar"><input id="diwanToken" name="token" type="password" dir="ltr" autocomplete="off" maxlength="16384" required {% if not diwan_endpoint_ready %}disabled{% endif %}>
+      <button id="diwanTokenShow" type="button" class="btn secondary" aria-pressed="false">{{ t('d_show') }}</button></div>
+    <p id="diwanTokenError" role="alert"></p>
+    <div class="d-toolbar"><button class="btn primary" {% if not diwan_endpoint_ready %}disabled{% endif %}>{{ t('d_validate_save') }}</button><button type="button" class="btn secondary" data-close-dialog>{{ t('d_cancel') }}</button></div>
+  </form>
+</dialog>

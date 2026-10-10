@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_ui_macros.html" import page_header, section_header, empty_state with context %}
+{% block content %}
+{% call page_header(t('d_tasks_analysis'), t('ui_analysis_help')) %}
+  <label class="workspace-source">{{ t('d_source') }}<select id="workspaceSource"><option value="bitrix" {% if default_source=='bitrix' %}selected{% endif %}>Bitrix24</option><option value="diwan" {% if default_source=='diwan' %}selected{% endif %}>{{ t('d_diwan') }}</option></select></label>
+{% endcall %}
+<div class="ui-workspace-nav">
+  <nav class="workspace-tabs" aria-label="{{ t('d_workspace_sections') }}">
+    <button type="button" class="workspace-tab" data-panel="analysisPanel" aria-pressed="true">{{ t('d_analysis_tab') }}</button>
+    <button type="button" class="workspace-tab" data-panel="assignmentPanel" aria-pressed="false">{{ t('d_assignment_tab') }} <span id="assignmentTabCount"></span></button>
+    <button type="button" class="workspace-tab" data-panel="peoplePanel" aria-pressed="false">{{ t('d_r_people') }}</button>
+  </nav>
+  <details class="ui-workspace-tools"><summary>{{ t('ui_task_tools') }} <span id="workspaceToolLabel"></span></summary><div>
+    <button type="button" class="workspace-tab" data-panel="historyPanel" aria-pressed="false">{{ t('d_history_tab') }}</button>
+    <button type="button" class="workspace-tab" data-panel="decisionsPanel" aria-pressed="false">{{ t('d_r_decisions') }}</button>
+    <button type="button" class="workspace-tab" data-panel="policyPanel" aria-pressed="false">{{ t('d_r_policy_short') }}</button>
+  </div></details>
+</div>
+<p id="recommendationStatus" role="status" aria-live="polite"></p>
+<section id="intelligencePage" class="ui-workspace-content" data-draft-scope="{{ g.profile_id }}">
+  <section id="analysisPanel" class="workspace-panel">
+    <form id="analyzeForm" class="ui-analysis-composer panel">
+      <label for="analysisQuery">{{ t('d_query') }}</label>
+      <div class="ui-query-input"><textarea id="analysisQuery" name="text" rows="2" maxlength="4000" placeholder="{{ t('ui_analysis_example') }}" required></textarea><button class="btn primary">{{ t('d_analyze') }}</button></div>
+      <div class="ui-query-options">
+        <label hidden>{{ t('d_source') }}<select name="source"><option value="diwan" {% if default_source == 'diwan' %}selected{% endif %}>{{ t('d_diwan') }}</option><option value="bitrix" {% if default_source == 'bitrix' %}selected{% endif %}>Bitrix24</option></select></label>
+        <label>{{ t('d_r_project') }}<select id="analysisProject" name="project_id"></select></label>
+        <label>{{ t('d_category') }}<input name="category"></label>
+      </div>
+      <p class="ui-scope-note">{{ t('ui_scope_help') }}</p>
+    </form>
+    <p id="analysisStatus" role="status"></p>
+    <div id="analysisWelcome">{{ empty_state(t('ui_analysis_empty_title'),t('ui_analysis_empty_help')) }}</div>
+    <section id="analysisResultWorkspace" hidden>
+      <header class="ui-result-header"><div><h2>{{ t('ui_results') }}</h2><p id="analysisQuerySummary"></p></div><button type="button" class="btn secondary" id="refineAnalysis">{{ t('ui_refine') }}</button></header>
+      <nav class="ui-result-tabs" role="tablist" aria-label="{{ t('ui_results') }}">
+        <button type="button" id="candidateResultTab" role="tab" aria-controls="previewRankResults" aria-selected="true" data-result-panel="previewRankResults">{{ t('ui_candidates') }} <span id="candidateResultCount"></span></button>
+        <button type="button" id="openAffinityTab" role="tab" aria-controls="openAffinityResults" aria-selected="false" tabindex="-1" data-result-panel="openAffinityResults">{{ t('d_r_open_affinity') }} <span id="openAffinityCount"></span></button>
+        <button type="button" id="relatedResultTab" role="tab" aria-controls="analysisResults" aria-selected="false" tabindex="-1" data-result-panel="analysisResults">{{ t('ui_related') }} <span id="relatedResultCount"></span></button>
+      </nav>
+      <section id="previewRankResults" role="tabpanel" aria-labelledby="candidateResultTab" tabindex="0" aria-live="polite"></section>
+      <section id="openAffinityResults" role="tabpanel" aria-labelledby="openAffinityTab" tabindex="0" hidden></section>
+      <section id="analysisResults" role="tabpanel" aria-labelledby="relatedResultTab" tabindex="0" aria-live="polite" hidden></section>
+      <div id="analysisUnderstanding"></div>
+      <div id="analysisContext"></div>
+    </section>
+  </section>
+  <section id="peoplePanel" class="workspace-panel" hidden>
+    {{ section_header(t('d_r_people'),t('ui_people_help')) }}
+    <form id="peopleSearch" class="insight-search ui-directory-search panel"><label>{{ t('d_r_people_search') }}<input name="q" type="search" maxlength="200"></label><label>{{ t('d_r_topic_filter') }}<select name="topic"><option value="">{{ t('d_r_all_topics') }}</option></select></label><button class="btn primary">{{ t('search') }}</button></form>
+    <div class="ui-list-heading"><p id="peopleStatus" role="status"></p><span class="ui-scope-note">{{ t('ui_scope_help') }}</span></div><div id="peopleResults" class="insight-grid"></div><div id="peoplePaging" class="d-toolbar"></div>
+  </section>
+  <section id="employeePanel" class="workspace-panel" hidden><nav class="ui-back-bar" aria-label="{{ t('d_r_back_results') }}"><button id="employeeBack" class="btn secondary" type="button">{{ t('d_r_back_results') }}</button></nav><div id="employeeProfile" aria-live="polite"></div></section>
+  <section id="assignmentPanel" class="workspace-panel" hidden>{% include 'recommendations.html' %}</section>
+  <section id="policyPanel" class="workspace-panel rec-workspace" hidden><p id="diwanPolicyHelp" hidden>{{ t('d_r_diwan_policy') }} <a href="/connections">{{ t('settings') }}</a></p><a class="btn secondary" data-workspace-view="assignments" href="/tasks?view=assignments">{{ t('d_assignment_tab') }}</a>{% include '_recommendation_policy.html' %}</section>
+  <section id="decisionsPanel" class="workspace-panel" hidden><h2>{{ t('d_r_decisions') }}</h2><p>{{ t('d_r_decisions_help') }}</p><button class="btn secondary" id="loadDecisions">{{ t('d_r_refresh') }}</button><div id="decisionRows" aria-live="polite"></div></section>
+
+  <section id="historyPanel" class="workspace-panel" hidden>
+    {% call section_header(t('d_history_tab'),t('ui_history_intro')) %}<button id="bitrixHistory" class="btn primary">{{ t('d_history_sync') }}</button>{% endcall %}
+    <p id="historyProgress" role="status"></p><div id="historyCoverage" class="ui-source-grid"></div>
+    <details class="ui-disclosure panel"><summary>{{ t('ui_diagnostics') }}</summary><div class="ui-disclosure-body"><p class="help">{{ t('d_history_note') }}</p><h3>{{ t('d_quality_title') }}</h3><div id="qualityDiagnostics"></div><button id="evaluateHistory" class="btn secondary">{{ t('d_evaluate') }}</button><div id="historyEvaluation"></div></div></details>
+    <section class="ui-history-records"><label class="ui-list-search">{{ t('d_r_queue_search') }}<input id="historySearch" type="search"></label><div id="intelligenceRows" class="panel"></div><div class="d-toolbar ui-pagination"><button class="btn secondary" id="historyPrev">{{ t('d_history_prev') }}</button><span id="historyPage"></span><button class="btn secondary" id="historyNext">{{ t('d_history_next') }}</button></div></section>
+    <details id="similarityExamples" class="ui-disclosure panel"><summary>{{ t('d_similar_pairs') }}</summary><div class="ui-disclosure-body"><p class="help">{{ t('d_pairs_help') }}</p><div id="similarityPairs" aria-live="polite"></div></div></details>
+  </section>
+</section>
+{% include '_recommendation_dialogs.html' %}
+{% endblock %}

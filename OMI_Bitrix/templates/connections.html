@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "_ui_macros.html" import page_header, section_header, settings_navigation with context %}
+{% block content %}
+{{ page_header(t('d_connections'),t('ui_connection_help')) }}
+<section id="connectionsPage" class="ui-settings-layout" data-ui-sections>
+{{ settings_navigation('connections') }}<div class="ui-settings-content">
+<form id="endpointForm" class="panel d-pad" data-ui-section>
+<h2>{{ t('d_endpoints') }}</h2><p class="help">{{ t('d_endpoint_note') }}</p>
+{% for name in ['list','detail','delegate'] %}
+<div class="d-endpoint"><label>{{ t('d_' ~ name ~ '_url') }}<input name="{{ name }}_url" type="text" dir="ltr" value="{{ connection.get(name ~ '_url', '') }}" {% if name=='list' %}required{% endif %} placeholder="https://internal.example/..."></label>
+<label>{{ t('d_method') }}<select name="{{ name }}_method">{% for method in (['POST','PUT','PATCH'] if name=='delegate' else ['GET','POST']) %}<option {% if connection.get(name ~ '_method', 'GET' if name=='detail' else 'POST') == method %}selected{% endif %}>{{ method }}</option>{% endfor %}</select></label></div>
+{% endfor %}
+<div class="d-grid"><label>{{ t('d_id_field') }}<select name="task_id_field">{% for name in ['id','taskId','bpmTaskId'] %}<option {% if connection.get('task_id_field','id')==name %}selected{% endif %}>{{ name }}</option>{% endfor %}</select></label>
+<label>{{ t('d_assignee_field') }}<input name="assignee_field" value="{{ connection.get('assignee_field','assignTo') }}" dir="ltr" required></label>
+<label>{{ t('d_recipient_kind') }}<select name="recipient_kind"><option value="email" {% if connection.get('recipient_kind')!='id' %}selected{% endif %}>{{ t('d_email') }}</option><option value="id" {% if connection.get('recipient_kind')=='id' %}selected{% endif %}>{{ t('d_identifier') }}</option></select></label>
+<label>{{ t('d_completed_statuses') }}<input name="completed_statuses" value="{{ connection.get('completed_statuses',[])|join(',') }}" dir="ltr"></label></div>
+<details><summary>{{ t('d_r_diwan_mapping') }}</summary><p class="help">{{ t('d_r_diwan_mapping_help') }}</p>
+<div class="d-grid"><label>{{ t('d_r_supervisor_field') }}<input name="supervisor_field" dir="ltr" value="{{ connection.get('supervisor_field','') }}"></label><label>{{ t('d_r_current_identity') }}<input name="current_user_id" dir="ltr" value="{{ connection.get('current_user_id','') }}"></label></div>
+<label><input type="checkbox" name="roles_confirmed" {% if connection.get('roles_confirmed') %}checked{% endif %}> {{ t('d_r_roles_confirmed') }}</label></details>
+<label class="toggle-row"><input type="checkbox" name="delegation_confirmed" {% if connection.get('delegation_confirmed') %}checked{% endif %}><span>{{ t('d_contract_confirm') }}</span></label>
+<div class="d-toolbar"><button class="btn primary">{{ t('d_save') }}</button><button type="button" class="btn secondary" data-token-open>{{ t('d_replace_token') if connected else t('d_connect') }}</button>{% if connected %}<button type="button" class="btn danger" id="removeDiwanToken">{{ t('d_remove_token') }}</button>{% endif %}</div>
+<p id="endpointStatus" role="status"></p>
+</form>
+<section id="recipientsSettings" class="panel d-pad" data-ui-section>
+<h2>{{ t('d_directory_title') }}</h2><p class="help">{{ t('d_directory_help') }}</p>
+<p id="directorySources" class="help"></p>
+<label>{{ t('d_directory_search') }}<input id="directorySearch" type="search"></label>
+<form id="directoryLinkForm" class="d-grid">
+<label>{{ t('d_directory_bitrix') }}<select name="bitrix" required></select></label>
+<label>{{ t('d_directory_diwan') }}<select name="diwan" required></select></label>
+<button class="btn secondary">{{ t('d_directory_link') }}</button>
+</form>
+<form id="directoryForm"><div id="directoryRows"></div>
+<div id="directoryPaging" class="d-toolbar"></div>
+<button class="btn primary">{{ t('d_save') }}</button></form>
+<p id="directoryStatus" role="status" aria-live="polite"></p>
+<details class="rec-details"><summary>{{ t('d_directory_add_source') }}</summary>
+<p class="help">{{ t('d_recipients_help') }}</p><div id="employeeRows"></div><div class="d-toolbar"><button id="addEmployee" class="btn secondary">{{ t('d_add_employee') }}</button><button id="saveEmployees" class="btn primary">{{ t('d_save') }}</button></div><p id="employeeStatus" role="status"></p></details></section>
+<section id="rulesSettings" class="panel d-pad" data-ui-section><h2>{{ t('d_rules') }}</h2><p>{{ t('d_rule_help') }}</p>
+<div class="d-columns"><div><h3>{{ t('d_priority') }}</h3><div id="priorityRules"></div><button class="btn secondary" id="addPriority">{{ t('d_add_rule') }}</button></div><div><h3>{{ t('d_sla_target') }}</h3><div id="slaRules"></div><button class="btn secondary" id="addSla">{{ t('d_add_rule') }}</button></div></div>
+<form id="analysisSettingsForm">
+<div class="d-grid"><label>{{ t('d_start_hour') }}<input name="start_hour" type="number" min="0" max="23" value="{{ analysis_settings.get('start_hour',8) }}" required></label><label>{{ t('d_end_hour') }}<input name="end_hour" type="number" min="1" max="24" value="{{ analysis_settings.get('end_hour',16) }}" required></label></div>
+<fieldset><legend>{{ t('d_workdays') }}</legend><div class="d-toolbar">{% for day in ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] %}<label><input type="checkbox" name="working_days" value="{{ loop.index0 }}" {% if loop.index0 in analysis_settings.get('working_days',[6,0,1,2,3]) %}checked{% endif %}> {{ t('d_' ~ day) }}</label>{% endfor %}</div></fieldset>
+<label>{{ t('d_holidays') }}<textarea name="holidays" dir="ltr">{{ analysis_settings.get('holidays',[])|join('\n') }}</textarea></label><button class="btn primary">{{ t('d_save') }}</button><p id="rulesStatus" role="status"></p>
+</form></section>
+<section id="taskUnderstandingSettings" class="panel d-pad" data-ui-section>
+<h2>{{ t('d_domain_title') }}</h2><p class="help">{{ t('d_domain_help') }}</p>
+<div id="builtInDomains"></div>
+<form id="domainRulesForm"><div id="domainRulesRows"></div>
+<div class="d-toolbar"><button type="button" id="addDomainRule" class="btn secondary">{{ t('d_domain_add') }}</button><button class="btn primary">{{ t('d_save') }}</button></div>
+<p id="domainRulesStatus" role="status" aria-live="polite"></p></form>
+</section>
+</div></section>
+<script id="connectionData" type="application/json">{{ {'employees':recipients,'settings':analysis_settings}|tojson }}</script>
+{% endblock %}

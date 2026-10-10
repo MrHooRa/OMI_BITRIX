@@ -1,0 +1,27 @@
+# Runtime, credentials and development outputs
+**/.venv/
+**/__pycache__/
+**/data/
+**/.cache/
+**/.playwright-cli/
+**/output/
+Vault/
+tmp/
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite3
+*.db
+*.pyc
+*.log
+# Large distribution assets live in GitHub Releases
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.whl
+*.zip
+*.rar
+*.zip.001
+*.zip.002

@@ -1,0 +1,77 @@
+{% from "_ui_macros.html" import navigation with context %}
+<!doctype html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{{ app_name }}</title>
+  <script>try{const t=localStorage.getItem('work-cockpit-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='diwany.css') }}">
+  {% if request.endpoint == "diwan.tasks" %}<link rel="stylesheet" href="{{ url_for('static', filename='recommendations.css') }}">{% endif %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='ui.css') }}">
+</head>
+<body class="ui-app">
+  <a class="ui-skip" href="#main-content">{{ t('ui_skip') }}</a>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ url_for('dashboard') }}">
+        <div class="brand-mark"><span></span><span></span><span></span></div>
+        <div><strong>{{ app_name }}</strong><small>{{ t('brand_subtitle') }}</small></div>
+      </a>
+      {{ navigation() }}
+      <div class="sidebar-foot">
+        <div class="profile-chip">
+          <div class="avatar">{{ (employee_name or 'E')[:1]|upper }}</div>
+          <div><strong>{{ employee_name }}</strong><small>{{ t('assigned_and_supervisor_note') }}</small></div>
+        </div>
+        <div class="sidebar-controls">
+          <a href="{{ url_for('set_language', lang='en' if lang == 'ar' else 'ar') }}" class="language-link">{{ t('switch_language') }}</a>
+          <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle light and dark theme" title="Light / Dark">
+            <span class="theme-sun">☀</span><span class="theme-moon">◐</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main" id="main-content" tabindex="-1">
+      <div class="mobile-topbar">
+        <a class="mobile-brand" href="{{ url_for('dashboard') }}">
+          <div class="brand-mark"><span></span><span></span><span></span></div>
+          <div><strong>{{ app_name }}</strong><small>{{ employee_name }}</small></div>
+        </a>
+        <div class="mobile-actions">
+          <button type="button" class="btn secondary ui-menu-toggle" data-nav-open aria-controls="navigationDialog" aria-expanded="false"><span aria-hidden="true">☰</span> {{ t('ui_menu') }}</button>
+          <a href="{{ url_for('set_language', lang='en' if lang == 'ar' else 'ar') }}" class="language-link">{{ 'EN' if lang == 'ar' else 'ع' }}</a>
+          <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle light and dark theme" title="Light / Dark">
+            <span class="theme-sun">☀</span><span class="theme-moon">◐</span>
+          </button>
+        </div>
+      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="toast-stack">
+            {% for category, message in messages %}<div class="toast {{ category }}">{{ message }}</div>{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      <a id="recommendationAlert" class="d-note" href="{{ url_for('recommendations.page') }}" hidden></a>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <dialog id="navigationDialog" class="ui-nav-dialog" aria-labelledby="navigationTitle"><header><h2 id="navigationTitle">{{ t('ui_main_nav') }}</h2><form method="dialog"><button class="btn secondary">{{ t('ui_close') }}</button></form></header>{{ navigation(true) }}</dialog>
+  <script>window.UI_I18N={{ {'results':t('ui_results'),'candidates':t('ui_candidates'),'related':t('ui_related'),'show_more':t('ui_show_more'),'history_count':t('ui_history_count'),'observed':t('ui_profile_observed'),'every_topic':t('ui_every_topic'),'context':t('ui_task_context'),'no_related':t('ui_related_empty_title'),'no_related_help':t('ui_no_related_help')}|tojson }};</script>
+  <script src="{{ url_for('static', filename='ui.js') }}"></script>
+  <script>window.WC_I18N={{ js_i18n|tojson }};window.WC_LANG={{ lang|tojson }};</script>
+  
+  {% include '_diwany_token_dialog.html' %}
+  <script>window.DIWAN_I18N={{ diwan_i18n|tojson }};</script>
+  <script src="{{ url_for('static', filename='security.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script src="{{ url_for('static', filename='diwany.js') }}"></script>
+  <script src="{{ url_for('static', filename='recommendations.js') }}"></script>
+  {% if request.endpoint == "diwan.connections" %}<script src="{{ url_for('static', filename='employee_directory.js') }}"></script>{% endif %}
+</body>
+</html>

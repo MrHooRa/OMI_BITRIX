@@ -1,0 +1,13 @@
+<details class="comment-history {% if comment_history_task_row %}task-discussion{% endif %}" data-comments-panel data-task-id="{{ task.id }}" data-limit="12">
+  <summary>
+    <span class="comment-summary-main"><span class="comment-bubble">•••</span>{{ t('discussion') }}</span>
+    <span class="comment-summary-meta" data-comment-count>{{ t('recent_comments') }}</span>
+  </summary>
+  <div class="comment-feed" data-comment-feed>
+    <div class="comment-feed-state">{{ t('open_to_load_comments') }}</div>
+  </div>
+  <div class="comment-feed-actions">
+    <button type="button" class="text-btn" data-comments-refresh>{{ t('refresh_comments') }}</button>
+    <button type="button" class="text-btn" data-comments-more hidden>{{ t('show_more_comments') }}</button>
+  </div>
+</details>

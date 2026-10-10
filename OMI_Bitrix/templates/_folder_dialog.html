@@ -1,0 +1,19 @@
+<dialog class="dialog folder-dialog" id="folderBrowser">
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <div><span class="eyebrow">{{ t('folder_browser') }}</span><h3>{{ t('choose_folder') }}</h3></div>
+      <button type="button" class="dialog-close" data-folder-close>×</button>
+    </div>
+    <p class="help">{{ t('folder_browser_server_note') }}</p>
+    <div class="folder-location" dir="ltr"><code id="folderCurrent">—</code></div>
+    <div class="folder-toolbar">
+      <button type="button" class="btn secondary small" id="folderRoots">{{ t('folder_roots') }}</button>
+      <button type="button" class="btn secondary small" id="folderUp">{{ t('go_up') }}</button>
+    </div>
+    <div class="folder-list" id="folderList"><div class="empty-box">{{ t('loading_folders') }}</div></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn secondary" data-folder-close>{{ t('folder_browser_close') }}</button>
+      <button type="button" class="btn primary" id="folderUse">{{ t('folder_browser_select') }}</button>
+    </div>
+  </div>
+</dialog>

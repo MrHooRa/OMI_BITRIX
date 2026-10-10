@@ -1,0 +1,13 @@
+  <details class="rec-policy" id="rankingPolicy" open><summary>{{ t('d_r_policy') }}</summary>
+    <p class="help">{{ t('d_r_policy_help') }}</p>
+    <form id="recommendationPolicy">
+      <p class="help">{{ t('d_r_routing_help') }}</p>
+      <div class="d-grid"><label>{{ t('d_r_category_field') }}<input id="recommendationCategoryField" placeholder="UF_..."></label><label>{{ t('d_r_topn') }}<input id="recommendationTopN" type="number" min="1" max="10" value="3"></label></div>
+      <details><summary>{{ t('d_r_data_fields') }}</summary><p class="help">{{ t('d_r_data_fields_help') }}</p><datalist id="sourceFieldOptions"></datalist><div class="d-grid">{% for name in ['quality','delivery','team','department','task_type','effort','reopened'] %}<label>{{ t('d_r_field_' ~ name) }}<input data-field-map="{{ name }}" list="sourceFieldOptions" dir="ltr"></label>{% endfor %}</div></details>
+      <p class="help">{{ t('d_r_weights_help') }}</p>
+      <div class="d-grid"><label>{{ t('d_r_similarity') }}<input id="weightSimilarity" type="number" min="0" max="100" step="1"></label><label>{{ t('d_r_experience') }}<input id="weightExperience" type="number" min="0" max="100" step="1"></label><label>{{ t('d_r_capacity') }}<input id="weightCapacity" type="number" min="0" max="100" step="1"></label></div>
+      <div id="recommendationEmployees"></div>
+      <button type="button" class="btn secondary" id="addRecommendationEmployee">{{ t('d_r_add_employee') }}</button>
+      <button class="btn primary" type="submit">{{ t('d_r_save') }}</button>
+    </form>
+  </details>

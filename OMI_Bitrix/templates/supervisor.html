@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="ui-page-header page-head">
+  <div>
+    <span class="eyebrow">{{ t('team_dashboard') }}</span>
+    <h1>{{ t('supervisor_dashboard') }}</h1>
+    <p>{{ t('team_dashboard_copy') }}</p>
+  </div>
+  <div class="head-actions">
+    <a class="btn secondary" href="{{ url_for('dashboard') }}">{{ t('my_work') }} · {{ assigned_count }}</a>
+    <a class="btn primary" href="{{ url_for('supervisor_report') }}">{{ t('export_excel') }}</a>
+    <form method="post" action="{{ url_for('manual_sync') }}"><button class="btn secondary">{{ t('sync_bitrix') }}</button></form>
+  </div>
+</header>
+
+<form class="global-search panel" method="get">
+  <span class="search-icon">⌕</span>
+  <input type="search" aria-label="{{ t('search_tasks') }}" name="q" value="{{ q }}" placeholder="{{ t('search_tasks') }}">
+  <button class="btn secondary">{{ t('search') }}</button>
+</form>
+{% if cache.error %}<div class="banner error">{{ t('last_sync_issue',error=cache.error) }}</div>{% endif %}
+
+<section class="metric-grid supervisor-metrics">
+  <div class="metric warm"><span>{{ t('pending_approval') }}</span><strong>{{ pending|length }}</strong><small>{{ t('pending_approval_copy') }}</small></div>
+  <div class="metric"><span>{{ t('team_active') }}</span><strong>{{ active|length }}</strong><small>{{ t('active_team_tasks') }}</small></div>
+  <div class="metric danger"><span>{{ t('team_overdue') }}</span><strong>{{ team|sum(attribute='overdue') }}</strong><small>{{ t('late_justifications') }}</small></div>
+  <div class="metric teal"><span>{{ t('team_members') }}</span><strong>{{ team|length }}</strong><small>{{ t('priority_load') }}</small></div>
+</section>
+
+<section class="panel team-stats-panel">
+  <div class="section-title">
+    <div><span class="eyebrow">{{ t('team_statistics') }}</span><h2>{{ t('employee_progress') }}</h2><p>{{ t('priority_load_help') }}</p></div>
+    <small class="muted">{{ t('late_report_note') }}</small>
+  </div>
+  <div class="team-stats-grid">
+  {% for s in team %}
+    <article class="team-stat-card">
+      <div class="team-stat-head">
+        <div class="avatar small-avatar">{{ s.name[:1]|upper }}</div>
+        <div class="team-person"><strong>{{ s.name }}</strong><small>{{ s.active }} {{ t('active_tasks') }} · {{ s.completed }} {{ t('completed_recent') }}</small></div>
+        <div class="load-score"><b>{{ s.priority_load }}</b><span>{{ t('priority_load') }}</span></div>
+      </div>
+      <div class="mini-metrics">
+        <span><b>{{ s.review }}</b>{{ t('pending_approval') }}</span>
+        <span class="danger-text"><b>{{ s.overdue }}</b>{{ t('late_tasks') }}</span>
+        <span><b>{{ s.justified }}</b>{{ t('justified_late') }}</span>
+        <span class="priority-text"><b>{{ s.high }}</b>{{ t('high_priority_tasks') }}</span>
+      </div>
+    </article>
+  {% else %}<div class="empty-state"><h3>{{ t('no_supervisor_tasks') }}</h3></div>{% endfor %}
+  </div>
+</section>
+
+{% if team_related_pairs %}
+<section class="panel similarity-panel">
+  <div class="section-title">
+    <div><span class="eyebrow">{{ t('similarity_analysis') }}</span><h2>{{ t('team_similarity') }}</h2><p>{{ t('team_similarity_copy') }}</p></div>
+    <a class="text-btn" href="{{ url_for('search_dashboard',scope='supervisor') }}">{{ t('search') }}</a>
+  </div>
+  <div class="similar-grid">
+  {% for pair in team_related_pairs[:8] %}
+    <article class="similar-card">
+      <div class="similar-score">{{ pair.score }}%</div>
+      <div class="similar-copy">
+        <a href="{{ url_for('supervisor_dashboard',q=pair.a.id) }}">{{ pair.a.title }}</a>
+        <span class="similar-arrow">↔</span>
+        <a href="{{ url_for('supervisor_dashboard',q=pair.b.id) }}">{{ pair.b.title }}</a>
+        <small>{{ pair.a.responsibleName }} · {{ pair.b.responsibleName }}</small>
+      </div>
+    </article>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="panel supervisor-section">
+  <div class="section-title">
+    <div><span class="eyebrow">{{ t('review_queue') }}</span><h2>{{ t('pending_approval') }}</h2><p>{{ t('pending_approval_copy') }}</p></div>
+    <div class="field-detection">
+      {% if review_fields.rating_field or review_fields.delivery_field %}<span class="status-badge ok">{{ t('company_field_detected') }}</span>{% else %}<span class="status-badge neutral">{{ t('company_field_fallback') }}</span>{% endif %}
+      <small>{{ t('review_field_note') }}</small>
+    </div>
+  </div>
+  <div class="supervisor-card-list">
+  {% for task in pending %}
+    <article class="supervisor-task-card pending-card {% if task.isLate %}overdue-card{% endif %}">
+      <div class="supervisor-task-top">
+        <div class="supervisor-task-main">
+          <div class="task-meta">
+            <span class="project-pill">{{ task.projectName }}</span><span dir="ltr">#{{ task.id }}</span><span class="employee-pill">{{ task.responsibleName }}</span>
+            {% for role in task.roles or [] %}<span class="role-chip {{ role }}">{{ t('role_'+role) }}</span>{% endfor %}
+            {% if task.isLate %}<span class="late-badge">{{ t('delivery_late') }}</span>{% endif %}
+          </div>
+          <h3>{{ task.title }}</h3>
+          <div class="task-sub"><span>{{ t('deadline') }}: <bdi>{{ task.deadline or t('no_deadline') }}</bdi></span><span>{{ t('workspace_employee') }}: {{ task.workspaceEmployee }}</span></div>
+        </div>
+        <div class="card-tools">
+          <form method="post" action="{{ url_for('open_workspace',task_id=task.id) }}"><button class="btn secondary">{{ t('open_team_workspace') }}</button></form>
+        </div>
+      </div>
+
+      {% if task.isLate %}<div class="justification-box {% if not task.supervisorJustification %}missing{% endif %}"><strong>{{ t('late_justification') }}</strong><p>{{ task.supervisorJustification or t('no_late_justification') }}</p></div>{% endif %}
+
+      <details class="action-details comment-details">
+        <summary>{{ t('comment_employee') }}</summary>
+        <form method="post" action="{{ url_for('task_message',task_id=task.id) }}">
+          <textarea name="message" rows="3" required placeholder="{{ t('comment_employee_placeholder') }}"></textarea>
+          <button class="btn secondary full-btn">{{ t('send_comment') }}</button>
+        </form>
+      </details>
+      {% include '_comments_panel.html' %}
+
+      {% if task.access.get('APPROVE') or task.access.get('DISAPPROVE') %}
+      <form method="post" action="{{ url_for('supervisor_review',task_id=task.id) }}" class="review-form" data-confirm="{{ t('confirm_review_prompt') }}">
+        <div class="review-grid">
+          <div><label>{{ t('delivery_timing') }}</label><select name="delivery"><option value="on_time" {% if not task.isLate %}selected{% endif %}>{{ t('delivery_on_time') }}</option><option value="late" {% if task.isLate %}selected{% endif %}>{{ t('delivery_late') }}</option></select></div>
+          <div><label>{{ t('rating') }}</label><select name="rating"><option value="5">5 — {{ t('outcome_5') }}</option><option value="4" selected>4 — {{ t('outcome_4') }}</option><option value="3">3 — {{ t('outcome_3') }}</option><option value="2">2 — {{ t('outcome_2') }}</option><option value="1">1 — {{ t('outcome_1') }}</option></select></div>
+          <div class="full"><label>{{ t('review_feedback') }}</label><textarea name="feedback" rows="3" placeholder="{{ t('review_feedback_placeholder') }}"></textarea></div>
+        </div>
+        <div class="review-actions">
+          {% if task.access.get('DISAPPROVE') %}<button class="btn secondary" name="decision" value="return">{{ t('return_employee') }}</button>{% endif %}
+          {% if task.access.get('APPROVE') %}<button class="btn primary" name="decision" value="approve">{{ t('approve') }}</button>{% endif %}
+        </div>
+      </form>
+      {% else %}<div class="permission-note">{{ t('permission_limited') }} · {{ t('supervisor_can_comment') }}</div>{% endif %}
+    </article>
+  {% else %}<div class="empty-state compact"><div class="empty-icon">✓</div><h3>{{ t('no_supervisor_tasks') }}</h3></div>{% endfor %}
+  </div>
+</section>
+
+<section class="panel supervisor-section">
+  <div class="section-title"><div><span class="eyebrow">{{ t('active_team_tasks') }}</span><h2>{{ t('active_team_tasks') }}</h2><p>{{ t('active_team_copy') }}</p></div></div>
+  <div class="supervisor-card-list">
+  {% for task in active %}
+    <article class="supervisor-task-card {% if task.isLate %}overdue-card{% endif %}">
+      <div class="supervisor-task-top">
+        <div class="supervisor-task-main">
+          <div class="task-meta"><span class="project-pill">{{ task.projectName }}</span><span dir="ltr">#{{ task.id }}</span><span class="employee-pill">{{ task.responsibleName }}</span>{% if task.priority|string=='2' %}<span class="priority">{{ t('priority_high') }}</span>{% endif %}{% for role in task.roles or [] %}<span class="role-chip {{ role }}">{{ t('role_'+role) }}</span>{% endfor %}</div>
+          <h3>{{ task.title }}</h3>
+          <div class="task-sub"><span>{{ t('deadline') }}: <bdi>{{ task.deadline or t('no_deadline') }}</bdi></span><span>{{ t('status') }}: {{ t('status_in_progress') if task.status|string=='3' else t('status_deferred') if task.status|string=='6' else t('status_waiting') }}</span></div>
+        </div>
+        <div class="card-tools"><form method="post" action="{{ url_for('open_workspace',task_id=task.id) }}"><button class="btn secondary">{{ t('open_team_workspace') }}</button></form></div>
+      </div>
+
+      {% if task.isLate %}<div class="justification-box {% if not task.supervisorJustification %}missing{% endif %}"><strong>{{ t('late_justification') }}</strong><p>{{ task.supervisorJustification or t('no_late_justification') }}</p></div>{% endif %}
+
+      <div class="supervisor-actions-grid">
+        <details class="action-details">
+          <summary>{{ t('comment_employee') }}</summary>
+          <form method="post" action="{{ url_for('task_message',task_id=task.id) }}"><textarea name="message" rows="3" required placeholder="{{ t('comment_employee_placeholder') }}"></textarea><button class="btn secondary full-btn">{{ t('send_comment') }}</button></form>
+        </details>
+
+        {% include '_comments_panel.html' %}
+
+        <details class="action-details">
+          <summary>{{ t('replan_task') }}</summary>
+          {% if task.access.get('CHANGE_DEADLINE') or task.access.get('EDIT') %}
+          <form method="post" action="{{ url_for('supervisor_replan',task_id=task.id) }}" data-confirm="{{ t('confirm_replan_prompt') }}">
+            <div class="two-col"><div><label>{{ t('new_deadline') }}</label><input type="datetime-local" name="deadline" dir="ltr"></div><div><label>{{ t('priority') }}</label><select name="priority"><option value="">—</option><option value="2" {% if task.priority|string=='2' %}selected{% endif %}>{{ t('priority_high') }}</option><option value="1" {% if task.priority|string=='1' %}selected{% endif %}>{{ t('priority_medium') }}</option><option value="0" {% if task.priority|string=='0' %}selected{% endif %}>{{ t('priority_low') }}</option></select></div></div>
+            <label>{{ t('replan_reason') }}</label><input name="reason" placeholder="{{ t('replan_reason_placeholder') }}">
+            <button class="btn primary full-btn">{{ t('save_replan') }}</button>
+          </form>
+          {% else %}<p class="permission-note">{{ t('permission_limited') }}</p>{% endif %}
+        </details>
+
+        <details class="action-details">
+          <summary>{{ t('reassign_task') }}</summary>
+          {% if task.access.get('DELEGATE') or task.access.get('EDIT') %}
+          <form method="post" action="{{ url_for('supervisor_reassign',task_id=task.id) }}" data-confirm="{{ t('confirm_reassign_prompt') }}">
+            <label>{{ t('assign_to') }}</label>
+            <input type="hidden" name="expected_assignee" value="{{ task.responsibleId }}">
+            <select name="responsible_id" required>
+              <option value="">—</option>
+              {% for m in members %}{% if task.groupId|string in m.projects %}<option value="{{ m.id }}" {% if m.id|string==task.responsibleId|string %}selected{% endif %}>{{ m.name }} · {{ t('member_load') }} {{ m.load }} · {{ m.active }} {{ t('active_short') }} · {{ m.high }} {{ t('high_short') }}</option>{% endif %}{% endfor %}
+            </select>
+            <p class="help">{{ t('reassign_load_hint') }}</p>
+            <label>{{ t('reassign_reason') }}</label><input name="reason" placeholder="{{ t('reassign_reason_placeholder') }}">
+            <button class="btn primary full-btn">{{ t('confirm_reassign') }}</button>
+          </form>
+          {% else %}<p class="permission-note">{{ t('permission_limited') }}</p>{% endif %}
+        </details>
+      </div>
+    </article>
+  {% else %}<div class="empty-state"><h3>{{ t('no_supervisor_tasks') }}</h3></div>{% endfor %}
+  </div>
+</section>
+
+{% if completed %}
+<section class="panel supervisor-section">
+  <div class="section-title"><div><span class="eyebrow">{{ t('completed_recent') }}</span><h2>{{ t('recent_completed') }}</h2><p>{{ t('recent_completed_copy') }}</p></div></div>
+  <div class="table-wrap"><table class="data-table"><thead><tr><th>{{ t('responsible') }}</th><th>{{ t('task_role') }}</th><th>{{ t('status') }}</th><th>{{ t('deadline') }}</th><th>{{ t('delivery_timing') }}</th></tr></thead><tbody>
+  {% for task in completed %}<tr><td><strong>{{ task.responsibleName }}</strong><small>#{{ task.id }} · {{ task.title }}</small></td><td>{% for role in task.roles or [] %}<span class="role-chip {{ role }}">{{ t('role_'+role) }}</span>{% endfor %}</td><td>{{ t('status_completed') }}</td><td><bdi>{{ task.deadline or '—' }}</bdi></td><td><span class="status-badge {% if task.isLate %}late{% else %}ok{% endif %}">{{ t('delivery_late') if task.isLate else t('delivery_on_time') }}</span></td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+{% endblock %}

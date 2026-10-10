@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+<head>
+  <meta charset="utf-8"><meta name="csrf-token" content="{{ csrf_token }}"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{{ t('setup_title') }}</title>
+  <script>try{const t=localStorage.getItem('work-cockpit-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body class="setup-page">
+<div class="setup-wrap">
+  <div class="setup-top"><div class="setup-brand"><div class="brand-mark"><span></span><span></span><span></span></div><b>OMI Bitrix</b></div><div class="setup-top-actions"><a class="btn secondary" href="{{ url_for('set_language', lang='en' if lang == 'ar' else 'ar') }}">{{ t('switch_language') }}</a><button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle light and dark theme" title="Light / Dark"><span class="theme-sun">☀</span><span class="theme-moon">◐</span></button></div></div>
+  <section class="setup-hero"><span class="eyebrow">{{ t('first_run_setup') }}</span><h1>{{ t('setup_hero').replace('\n',' ') }}</h1><p>{{ t('setup_intro') }}</p></section>
+  {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="toast {{ category }} static-toast">{{ message }}</div>{% endfor %}{% endwith %}
+
+  <form method="post" class="setup-card" id="setupForm">
+    <input type="hidden" name="ui_language" value="{{ lang }}">
+    <div class="step-block">
+      <div class="step-head"><span>1</span><div><h2>{{ t('bitrix_connection') }}</h2><p>{{ t('bitrix_connection_help') }}</p></div></div>
+      <label>{{ t('incoming_webhook') }}</label>
+      <div class="inline-control"><input id="webhook_url" name="webhook_url" type="password" value="{{ settings.webhook_url }}" placeholder="https://company.bitrix24.com/rest/123/token/" required dir="ltr"><button type="button" class="btn secondary" id="testBitrix">{{ t('test_fetch_projects') }}</button></div>
+      <div id="connectionStatus" class="status-line"></div>
+    </div>
+
+    <div class="step-block">
+      <div class="step-head"><span>2</span><div><h2>{{ t('employee_name') }}</h2><p>{{ t('employee_name_help') }}</p></div></div>
+      <input name="employee_name" id="employee_name" value="{{ settings.employee_name }}" placeholder="Employee name">
+    </div>
+
+    <div class="step-block">
+      <div class="step-head"><span>3</span><div><h2>{{ t('choose_projects') }}</h2><p>{{ t('choose_projects_help') }}</p></div></div>
+      <div class="project-toolbar"><input type="search" id="projectSearch" placeholder="{{ t('search_fetched') }}"><button type="button" class="text-btn" id="selectAll">{{ t('select_all') }}</button><button type="button" class="text-btn" id="clearAll">{{ t('clear') }}</button></div>
+      <div id="projectGrid" class="project-grid">
+        {% for p in selected %}<label class="project-option"><input type="checkbox" name="project_id" value="{{ p.id }}" checked><span><strong>{{ p.name }}</strong><small dir="ltr">ID {{ p.id }}</small></span></label>{% else %}<div class="empty-box">{{ t('test_to_fetch') }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="step-block">
+      <div class="step-head"><span>4</span><div><h2>{{ t('shared_obsidian_vault') }}</h2><p>{{ t('employee_folder_structure') }}</p></div></div>
+      <label>{{ t('shared_vault_path') }}</label>
+      <div class="inline-control"><input id="vault_root" name="vault_root" value="{{ settings.vault_root }}" placeholder="S:\Team\ObsidianVault" required dir="ltr"><button type="button" class="btn secondary folder-browse-trigger" data-target="vault_root">{{ t('browse') }}</button><button type="button" class="btn secondary" id="testWorkspace">{{ t('d_test_folder') }}</button></div><p id="workspaceTestStatus" role="status"></p>
+      <p class="help">{{ t('folder_browser_help') }}</p>
+      <div class="path-preview"><span>{{ t('employee_folder_preview') }}</span><code id="employeePathPreview" dir="ltr">…\Bitrix Work\{{ settings.employee_name or 'Employee' }}\Project\Task</code></div>
+    </div>
+
+    
+<div class="form-grid">
+<label>{{ t('d_storage_mode') }}<select name="storage_mode">{% for mode in ['Shared Folder','Local Folder','Network Share','Obsidian Vault'] %}<option>{{ mode }}</option>{% endfor %}</select></label>
+<label>{{ t('d_daily_minutes') }}<input name="planner_minutes" type="number" min="15" max="1440" step="15" value="480"></label>
+<label>{{ t('d_manual_projects') }}<input name="manual_projects" dir="ltr" placeholder="123,456"></label>
+</div>
+<div class="settings-strip">
+      
+      <div><label>{{ t('sync_every') }}</label><select name="sync_interval"><option value="60" {% if settings.sync_interval==60 %}selected{% endif %}>60 {{ t('sec') }}</option><option value="90" {% if settings.sync_interval==90 %}selected{% endif %}>90 {{ t('sec') }}</option><option value="180" {% if settings.sync_interval==180 %}selected{% endif %}>3 {{ t('min') }}</option></select></div>
+      <div><label>{{ t('planner_starts') }}</label><input type="time" name="workday_start" value="{{ settings.workday_start or '08:00' }}" dir="ltr"></div>
+      <div><label>{{ t('report_window') }}</label><select name="report_days"><option value="30">30 {{ t('days') }}</option><option value="90" selected>90 {{ t('days') }}</option><option value="180">180 {{ t('days') }}</option></select></div>
+    </div>
+    <label class="toggle-row"><input type="checkbox" name="auto_scaffold" {% if settings.auto_scaffold %}checked{% endif %}><span>{{ t('auto_scaffold') }}</span></label>
+    <button type="submit" class="btn primary big full-btn">{{ t('save_launch') }}</button>
+  </form>
+</div>
+{% include '_folder_dialog.html' %}
+<script>window.WC_I18N={{ js_i18n|tojson }};window.WC_LANG={{ lang|tojson }};</script><script src="{{ url_for('static', filename='security.js') }}"></script><script src="{{ url_for('static', filename='app.js') }}"></script>
+</body></html>

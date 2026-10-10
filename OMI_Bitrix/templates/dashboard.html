@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="ui-page-header page-head dashboard-head">
+  <div><span class="eyebrow">{{ t('delivery_queue') }}</span><h1>{{ t('hero_title') }}</h1><p>{{ user.NAME or '' }} {{ user.LAST_NAME or '' }} · {{ t('selected_projects_count', count=projects|length) }}</p></div>
+  <div class="head-actions">
+    <a class="btn secondary" href="{{ url_for('supervisor_dashboard') }}">{{ t('team_work') }} · {{ supervisor_count }}</a>
+    <form method="post" action="{{ url_for('manual_sync') }}"><button class="btn primary">{{ t('sync_bitrix') }}</button></form>
+  </div>
+</header>
+
+<form class="global-search panel" method="get" action="{{ url_for('search_dashboard') }}">
+  <span class="search-icon">⌕</span><input type="search" aria-label="{{ t('search_tasks') }}" name="q" placeholder="{{ t('search_everything') }}"><input type="hidden" name="scope" value="all"><button class="btn secondary">{{ t('search') }}</button>
+</form>
+
+<section class="metric-grid">
+  <div class="metric danger"><span>{{ t('overdue') }}</span><strong>{{ counts.overdue }}</strong><small>{{ t('needs_update') }}</small></div>
+  <div class="metric warm"><span>{{ t('today_focus') }}</span><strong>{{ today_plan|length }}</strong><small>{{ t('due_today_or_started') }}</small></div>
+  <div class="metric"><span>{{ t('due_72h') }}</span><strong>{{ counts.soon }}</strong><small>{{ t('coming_next') }}</small></div>
+  <div class="metric teal"><span>{{ t('active_tasks') }}</span><strong>{{ all_tasks|length }}</strong><small>{{ t('selected_projects') }}</small></div>
+</section>
+{% if cache.error %}<div class="banner error">{{ t('last_sync_issue', error=cache.error) }}</div>{% endif %}
+
+<section class="panel planner-panel" id="todayPlanner" data-date="{{ planner_date }}" data-start="{{ planner_start }}" data-revision="{{ planner_revision }}">
+  <div class="section-title planner-head"><div><span class="eyebrow">{{ t('today_8h') }}</span><h2>{{ t('focus_planner') }}</h2><p>{{ t('planner_copy', date=planner_date) }}</p></div><div class="planner-capacity"><strong id="plannerTotal">8{{ t('hour_short') }} 00{{ t('minute_short') }}</strong><span>{{ t('planned') }}</span><button type="button" class="text-btn" id="plannerReset">{{ t('reset_auto_plan') }}</button></div></div>
+  <div class="planner-list" id="plannerList">
+    {% for item in today_plan %}{% set task=item.task %}
+    <article class="planner-item" data-task-id="{{ task.id }}" data-minutes="{{ item.minutes }}" data-default-minutes="{{ item.minutes }}">
+      <div class="planner-time" dir="ltr"><strong class="planner-start">{{ item.start }}</strong><span>→</span><strong class="planner-end">{{ item.end }}</strong></div>
+      <div class="planner-task"><div class="task-meta"><span class="project-pill">{{ task.projectName }}</span><span dir="ltr">#{{ task.id }}</span>{% if task.priority|string=='2' %}<span class="priority">{{ t('high_priority') }}</span>{% endif %}{% if task.status|string=='3' %}<span class="status-running">{{ t('in_progress') }}</span>{% endif %}{% if task.plannerReason == 'started' %}<span class="plan-source">{{ t('started_into_today') }}</span>{% endif %}</div><a class="task-title" href="{{ url_for('task_detail',task_id=task.id) }}">{{ task.title }}</a><div class="planner-detail">{% if task.deadlineLocal %}<span>{{ t('deadline') }} <bdi>{{ task.deadlineLocal[:16]|replace('T',' ') }}</bdi></span>{% else %}<span>{{ t('no_deadline') }}</span>{% endif %}<span class="planner-duration">{{ item.minutes//60 }}{{ t('hour_short') }} {{ '%02d'%(item.minutes%60) }}{{ t('minute_short') }}</span></div></div>
+      <div class="planner-controls"><button type="button" class="icon-btn plan-move" data-direction="up" title="{{ t('move_earlier') }}">↑</button><button type="button" class="icon-btn plan-move" data-direction="down" title="{{ t('move_later') }}">↓</button><button type="button" class="icon-btn plan-time" data-delta="-15" title="{{ t('less_15') }}">−15</button><button type="button" class="icon-btn plan-time" data-delta="15" title="{{ t('more_15') }}">+15</button>{% if task.status|string=='3' %}<a class="btn ghost small" href="{{ url_for('task_detail',task_id=task.id) }}">{{ t('open') }}</a>{% if task.dueBucket in ['soon','later','no-deadline'] %}<form method="post" action="{{ url_for('pause_task',task_id=task.id) }}"><button class="btn secondary small pause-btn" title="{{ t('pause_future_hint') }}">{{ t('pause') }}</button></form>{% endif %}{% else %}<form method="post" action="{{ url_for('start_task',task_id=task.id) }}"><button class="btn primary small">{{ t('start') }}</button></form>{% endif %}</div>
+    </article>
+    {% else %}<div class="empty-state compact"><div class="empty-icon">✓</div><h3>{{ t('no_focus_tasks') }}</h3><p>{{ t('start_task_to_plan') }}</p></div>{% endfor %}
+  </div>
+</section>
+
+{% if related_pairs %}
+<section class="panel similarity-panel">
+  <div class="section-title"><div><span class="eyebrow">{{ t('similarity_analysis') }}</span><h2>{{ t('related_upcoming') }}</h2><p>{{ t('related_upcoming_copy') }}</p></div><a class="text-btn" href="{{ url_for('search_dashboard',scope='mine') }}">{{ t('search') }}</a></div>
+  <div class="similar-grid">{% for pair in related_pairs[:6] %}<div class="similar-card"><div class="similar-score">{{ pair.score }}%</div><div><a href="{{ url_for('task_detail',task_id=pair.a.id) }}">{{ pair.a.title }}</a><span>↔</span><a href="{{ url_for('task_detail',task_id=pair.b.id) }}">{{ pair.b.title }}</a><small>{{ pair.a.projectName }} · {{ pair.b.projectName }}</small></div></div>{% endfor %}</div>
+</section>
+{% endif %}
+
+<section class="panel">
+  <div class="section-title"><div><span class="eyebrow">{{ t('assigned_to_me') }}</span><h2>{{ t('my_work') }}</h2><p>{{ t('sorted_deadline') }}</p></div><small class="muted">{{ t('last_sync', value=cache.updated_at or t('not_yet')) }}</small></div>
+  <div class="task-list">
+    {% for task in tasks %}
+    <article class="task-row {{ task.dueBucket }}">
+      <div class="task-main">
+        <div class="task-meta"><span class="project-pill">{{ task.projectName }}</span><span dir="ltr">#{{ task.id }}</span>{% if task.priority|string=='2' %}<span class="priority">{{ t('high_priority') }}</span>{% endif %}{% if task.status|string=='3' %}<span class="status-badge ok">{{ t('in_progress') }}</span>{% elif task.status|string=='2' %}<span class="status-badge neutral">{{ t('waiting') }}</span>{% endif %}{% if task.isCreator %}<span class="role-chip creator">{{ t('role_creator') }}</span>{% endif %}{% if task.isObserver %}<span class="role-chip observer">{{ t('role_observer') }}</span>{% endif %}</div>
+        <a class="task-title" href="{{ url_for('task_detail',task_id=task.id) }}">{{ task.title }}</a>
+        <div class="task-sub"><span class="due-label"><bdi>{{ task.deadline or t('no_deadline') }}</bdi></span><span>{{ task.workspaceEmployee }}</span>{% if task.hasDelayJustification %}<span class="ok-text">{{ t('justified') }}</span>{% endif %}</div>
+      </div>
+      <div class="readiness-wrap"><div class="ring" style="--p:{{ task.readiness }}"><span>{{ task.readiness }}%</span></div><small>{{ t('docs') }}</small></div>
+      <div class="task-actions">{% if task.status|string not in ['3','4','5'] %}<form method="post" action="{{ url_for('start_task',task_id=task.id) }}"><button class="btn primary small">{{ t('start') }}</button></form>{% elif task.status|string=='3' and task.dueBucket in ['soon','later','no-deadline'] %}<form method="post" action="{{ url_for('pause_task',task_id=task.id) }}"><button class="btn secondary small pause-btn" title="{{ t('pause_future_hint') }}">{{ t('pause') }}</button></form>{% endif %}<a class="btn ghost small" href="{{ url_for('task_detail',task_id=task.id) }}">{{ t('open') }}</a><form method="post" action="{{ url_for('open_workspace',task_id=task.id) }}"><button class="icon-btn" title="{{ t('open_file_explorer') }}">{{ t('folder') }}</button></form>{% if task.dueBucket in ['today','overdue'] %}<button type="button" class="icon-btn delay-trigger" data-task="{{ task.id }}" data-title="{{ task.title }}" data-deadline="{{ task.deadline or '' }}" data-justified="{{ 1 if task.hasDelayJustification else 0 }}" data-auto-open="{{ 1 if task.justificationRequired else 0 }}">{{ t('cant_finish') }}</button>{% endif %}</div>
+      {% set comment_history_task_row = true %}{% include '_comments_panel.html' %}{% set comment_history_task_row = false %}
+    </article>
+    {% else %}<div class="empty-state"><h3>{{ t('no_active_tasks') }}</h3><p>{{ t('empty_queue_copy') }}</p></div>{% endfor %}
+  </div>
+</section>
+
+<dialog class="dialog" id="delayDialog"><form method="post" id="delayForm"><div class="dialog-head"><div><span class="eyebrow">{{ t('deadline_justification') }}</span><h3 id="delayTitle">{{ t('why_miss_deadline') }}</h3></div><button type="button" class="dialog-close" data-close-delay>×</button></div><p id="delayDeadline" class="muted"></p><div class="quick-chips"><button type="button" data-justify="{{ t('justify_waiting') }}">{{ t('waiting_input') }}</button><button type="button" data-justify="{{ t('justify_technical') }}">{{ t('technical_blocker') }}</button><button type="button" data-justify="{{ t('justify_scope') }}">{{ t('scope_changed') }}</button><button type="button" data-justify="{{ t('justify_validation') }}">{{ t('validation_needed') }}</button></div><textarea id="delayJustification" name="justification" rows="5" placeholder="{{ t('delay_placeholder') }}" required></textarea><div class="dialog-actions"><button type="button" class="btn secondary" data-close-delay>{{ t('cancel') }}</button><button class="btn primary">{{ t('post_justification') }}</button></div></form></dialog>
+{% endblock %}

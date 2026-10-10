@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_ui_macros.html" import page_header, section_header with context %}
+{% block content %}
+{{ page_header(t('search_results'),t('search_hint')) }}
+<form class="global-search panel search-page-form" method="get">
+  <span class="search-icon">⌕</span><input type="search" aria-label="{{ t('search_tasks') }}" name="q" value="{{ q }}" placeholder="{{ t('search_tasks') }}" autofocus>
+  <select name="scope" aria-label="{{ t('d_r_scope') }}"><option value="all" {% if scope=='all' %}selected{% endif %}>{{ t('search_scope_all') }}</option><option value="mine" {% if scope=='mine' %}selected{% endif %}>{{ t('search_scope_mine') }}</option><option value="supervisor" {% if scope=='supervisor' %}selected{% endif %}>{{ t('search_scope_supervisor') }}</option></select>
+  <button class="btn primary">{{ t('search') }}</button>
+</form>
+<div class="ui-list-heading"><p>{{ t('ui_search_count', count=tasks|length) }}</p><span class="ui-scope-note">{{ t('ui_scope_help') }}</span></div>
+<section class="search-results ui-search-results">
+{% for task in tasks %}
+<article class="panel search-result-card">
+  <div class="search-result-main"><div class="task-meta"><span class="project-pill">{{ task.projectName }}</span><span dir="ltr">#{{ task.id }}</span>{% for role in task.roles or [] %}<span class="role-chip {{ role }}">{{ t('role_'+role) }}</span>{% endfor %}{% if task.searchScore %}<span class="score-pill">{{ task.searchScore }}%</span>{% endif %}</div><h3>{{ task.title }}</h3><p>{{ (task.description or '')|striptags|truncate(220) }}</p><div class="task-sub"><span>{{ task.responsibleName }}</span><span><bdi>{{ task.deadline or t('no_deadline') }}</bdi></span></div></div>
+  <div class="search-result-actions">{% if task.isAssignee %}<a class="btn secondary" href="{{ url_for('task_detail',task_id=task.id) }}">{{ t('open') }}</a>{% else %}<a class="btn secondary" href="{{ url_for('supervisor_dashboard',q=task.id) }}">{{ t('team_work') }}</a>{% endif %}</div>
+  {% if task.similarTasks %}<div class="related-strip"><strong>{{ t('related_tasks') }}</strong>{% for r in task.similarTasks %}<span><bdi>#{{ r.id }}</bdi> {{ r.title }} <em>{{ t('similarity_score',score=r.score) }}</em></span>{% endfor %}</div>{% endif %}
+</article>
+{% else %}<div class="panel empty-state"><h3>{{ t('no_search_results') }}</h3></div>{% endfor %}
+</section>
+{% endblock %}

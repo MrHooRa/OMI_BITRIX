@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_ui_macros.html" import page_header, section_header with context %}
+{% block content %}
+{% call page_header(t('d_diwan'),t('ui_diwan_search_help')) %}<button class="btn primary" data-token-open>{{ t('d_replace_token') if connected else t('d_connect') }}</button>{% endcall %}
+<section id="diwanPage" data-connected="{{ 1 if connected else 0 }}">
+  <form id="diwanFilters" class="panel ui-source-toolbar">
+    <div class="ui-list-search"><label for="diwanSearch">{{ t('d_search') }}</label><input id="diwanSearch" type="search"></div>
+    <div class="ui-toolbar-actions"><button class="btn primary">{{ t('d_sync') }}</button><button type="button" id="diwanCancel" class="btn secondary" hidden>{{ t('d_cancel') }}</button><a class="btn secondary" href="{{ url_for('diwan.export') }}">{{ t('d_export') }}</a></div>
+    <details class="ui-fetch-options"><summary>{{ t('ui_fetch_filters') }}</summary><div class="d-grid"><label>{{ t('d_request_id') }}<input name="requestId"></label><label>{{ t('d_status_filter') }}<input name="statusId" type="number"></label><label>{{ t('d_from') }}<input name="from" type="date"></label><label>{{ t('d_to') }}<input name="to" type="date"></label></div></details>
+  </form>
+  <p id="diwanProgress" role="status" aria-live="polite"></p><div class="ui-list-heading"><span id="diwanCount"></span><span class="ui-scope-note">{{ t('ui_data_help') }}</span></div>
+  <div id="diwanRows" class="panel"></div>
+  <div class="d-toolbar"><button id="diwanPrev" class="btn secondary">{{ t('d_previous') }}</button><span id="diwanPageNumber"></span><button id="diwanNext" class="btn secondary">{{ t('d_next') }}</button></div>
+  <p class="help">{{ t('d_history_note') }} {{ t('d_details_export') }}</p>
+</section>
+<dialog id="diwanDetail" class="d-dialog d-wide" aria-labelledby="diwanDetailTitle">
+  <div class="d-pad"><div class="d-toolbar"><h2 id="diwanDetailTitle">{{ t('d_details') }}</h2><button type="button" class="btn secondary" data-close-dialog>{{ t('d_cancel') }}</button></div>
+  <div id="diwanDetailBody"></div>
+  <form id="delegateForm" class="d-toolbar"><label class="d-grow">{{ t('d_recipients') }}<select name="recipient" required><option value="">—</option>{% for person in recipients if person.source == 'diwan' %}<option value="{{ person.value }}">{{ person.name_ar if lang == 'ar' else person.name_en }} · {{ person.value }}</option>{% endfor %}</select></label><button class="btn primary" {% if not delegate_ready %}disabled{% endif %}>{{ t('d_delegate') }}</button><button type="button" id="reconcileDelegation" class="btn secondary">{{ t('d_reconcile') }}</button></form>
+  {% if not delegate_ready %}<p>{{ t('d_error_delegation_disabled') }} <a href="{{ url_for('diwan.connections') }}">{{ t('d_open_settings') }}</a></p>{% endif %}
+  <p id="delegationStatus" role="status"></p></div>
+</dialog>
+{% endblock %}

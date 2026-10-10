@@ -1,0 +1,40 @@
+{# Structural page primitives. Visual tokens remain in the existing identity. #}
+{% macro page_header(title, description='', context='') -%}
+<header class="page-head ui-page-header">
+  <div class="ui-page-heading">{% if context %}<p class="ui-breadcrumb">{{ context }}</p>{% endif %}<h1>{{ title }}</h1>{% if description %}<p>{{ description }}</p>{% endif %}</div>
+  {% if caller is defined %}<div class="ui-page-actions">{{ caller() }}</div>{% endif %}
+</header>
+{%- endmacro %}
+{% macro section_header(title, description='') -%}
+<header class="ui-section-header"><div><h2>{{ title }}</h2>{% if description %}<p>{{ description }}</p>{% endif %}</div>{% if caller is defined %}<div class="ui-section-actions">{{ caller() }}</div>{% endif %}</header>
+{%- endmacro %}
+{% macro empty_state(title, description='') -%}
+<div class="ui-empty"><span class="ui-empty-symbol" aria-hidden="true">⌕</span><h2>{{ title }}</h2>{% if description %}<p>{{ description }}</p>{% endif %}</div>
+{%- endmacro %}
+{% macro navigation(compact=false) -%}
+<nav class="ui-nav-groups" aria-label="{{ t('ui_main_nav') }}">
+  <section class="ui-nav-group"><h2>{{ t('ui_work') }}</h2>
+    <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint in ['dashboard','task_detail'] %}active{% endif %}" {% if request.endpoint in ['dashboard','task_detail'] %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">▣</span><span>{{ t('my_work') }}</span></a>
+    <a href="{{ url_for('diwan.page') }}" class="nav-link {% if request.endpoint=='diwan.page' %}active{% endif %}" {% if request.endpoint=='diwan.page' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">▤</span><span>{{ t('d_diwan') }}</span></a>
+    <a href="{{ url_for('supervisor_dashboard') }}" class="nav-link {% if request.endpoint=='supervisor_dashboard' %}active{% endif %}" {% if request.endpoint=='supervisor_dashboard' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">◎</span><span>{{ t('team_work') }}</span></a>
+  </section>
+  <section class="ui-nav-group"><h2>{{ t('ui_discover') }}</h2>
+    <a href="{{ url_for('diwan.tasks') }}" class="nav-link {% if request.endpoint=='diwan.tasks' %}active{% endif %}" {% if request.endpoint=='diwan.tasks' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">↗</span><span>{{ t('d_tasks_analysis') }}</span>{% if not compact %}<span id="recommendationBadge"></span>{% endif %}</a>
+    <a href="{{ url_for('search_dashboard') }}" class="nav-link {% if request.endpoint=='search_dashboard' %}active{% endif %}" {% if request.endpoint=='search_dashboard' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">⌕</span><span>{{ t('global_search') }}</span></a>
+  </section>
+  <section class="ui-nav-group"><h2>{{ t('ui_manage') }}</h2><a href="{{ url_for('diwan.connections') }}" class="nav-link {% if request.endpoint in ['settings','diwan.connections','setup'] %}active{% endif %}" {% if request.endpoint in ['settings','diwan.connections','setup'] %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">⚙</span><span>{{ t('settings') }}</span></a></section>
+</nav>
+{%- endmacro %}
+
+{% macro settings_navigation(current) -%}
+<nav class="ui-settings-nav ui-settings-tree" aria-label="{{ t('ui_settings_nav') }}">
+  {% set groups = [
+    ('ui_connections', [('connections','endpointForm','ui_diwan_connection'),('settings','bitrixIdentity','ui_bitrix_connection')]),
+    ('ui_workspace_group', [('settings','bitrixWorkspace','ui_workspace_storage'),('settings','bitrixProjects','ui_projects'),('settings','bitrixSchedule','ui_schedule')]),
+    ('ui_analysis_group', [('connections','recipientsSettings','d_directory_title'),('connections','taskUnderstandingSettings','d_domain_title'),('connections','rulesSettings','ui_analysis_rules')])
+  ] %}
+  {% for heading, items in groups %}<div class="ui-settings-group"><h2>{{ t(heading) }}</h2>
+  {% for page, section, label in items %}<a href="{{ '/settings' if page=='settings' else '/connections' }}#{{ section }}" {% if page==current %}data-ui-target="{{ section }}"{% endif %}><span>{{ t(label) }}</span><span class="ui-nav-cue" aria-hidden="true">{{ '‹' if dir=='rtl' else '›' }}</span></a>{% endfor %}</div>{% endfor %}
+  <div class="ui-settings-group"><h2>{{ t('ui_assignment_controls') }}</h2><a href="/tasks?view=policy"><span>{{ t('d_r_policy_short') }}</span><span class="ui-nav-cue" aria-hidden="true">↗</span></a></div>
+</nav>
+{%- endmacro %}

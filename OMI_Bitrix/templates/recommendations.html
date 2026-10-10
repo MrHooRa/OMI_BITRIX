@@ -1,0 +1,22 @@
+<section id="recommendationPage" class="rec-workspace">
+  <div class="d-toolbar"><button class="btn primary" id="recommendationRefresh">{{ t('d_r_refresh') }}</button><a data-workspace-view="policy" href="/tasks?view=policy" class="btn secondary">{{ t('d_r_policy_short') }}</a></div>
+  <div class="rec-sync"><span class="rec-sync-dot" aria-hidden="true"></span><p id="recommendationCoverage">{{ t('d_r_working') }}</p></div>
+  <div class="rec-layout">
+    <aside class="rec-queue"><div class="rec-section-heading"><h2>{{ t('d_r_inbox') }}</h2><span id="queueCount" class="rec-count">0</span></div><p class="rec-caption">{{ t('d_r_queue_hint') }}</p><label>{{ t('d_r_queue_search') }}<input id="queueSearch" type="search"></label>
+    <details class="ui-queue-filters"><summary>{{ t('ui_queue_filters') }}</summary><div class="d-grid"><label>{{ t('d_r_scope') }}<select id="queueScope"><option value="needs">{{ t('d_r_inbox') }}</option><option value="all">{{ t('d_r_all_supervised') }}</option></select></label><label>{{ t('d_r_sort') }}<select id="queueSort"><option value="priority">{{ t('d_priority') }}</option><option value="deadline">{{ t('d_r_deadline') }}</option></select></label></div></details><div id="recommendationInbox" tabindex="0" role="region" aria-label="{{ t('d_r_inbox') }}"></div></aside>
+    <div class="rec-main">
+      <form id="recommendationForm" class="rec-composer">
+        <div class="rec-section-heading"><h2>{{ t('d_r_task_brief') }}</h2><span class="rec-caption">{{ t('d_r_private') }}</span></div>
+        <label hidden>{{ t('d_r_task') }}<select id="recommendationTask"><option value="">{{ t('d_r_select_task') }}</option></select></label>
+        <div id="previewFields" hidden><label>{{ t('d_r_text') }}<textarea id="recommendationText" maxlength="4000" rows="3" placeholder="{{ t('d_r_query_example') }}"></textarea></label>
+          <div class="d-grid"><label>{{ t('d_r_project') }}<select id="recommendationProject"></select></label><label>{{ t('d_r_category') }}<input id="recommendationCategory" maxlength="200" placeholder="{{ t('d_r_optional') }}"></label></div>
+        </div>
+        <div id="taskBrief"></div><p id="selectedTaskState" class="rec-task-state" hidden></p>
+        <div class="rec-submit"><button class="btn primary" type="submit">{{ t('d_r_rank') }} <span aria-hidden="true">↗</span></button><span class="rec-caption">{{ t('d_r_human_decision') }}</span></div>
+        <div class="rec-task-actions" id="taskDecisionActions" hidden><button type="button" class="btn secondary" id="claimOwnWork">{{ t('d_r_self') }}</button><details><summary>{{ t('d_r_other_actions') }}</summary><button type="button" class="btn secondary" id="markNeedsAssignment">{{ t('d_r_needs') }}</button><button type="button" class="btn secondary" id="verifyAssignment">{{ t('d_r_verify') }}</button><button type="button" class="btn secondary" id="releaseUncertain">{{ t('d_r_release') }}</button></details></div>
+      </form>
+      <section id="recommendationResults" class="rec-results" aria-live="polite"><div class="rec-empty"><span class="rec-empty-mark" aria-hidden="true">↗</span><h2>{{ t('d_r_start_title') }}</h2><p>{{ t('d_r_start_help') }}</p></div></section>
+    </div>
+  </div>
+  <p class="rec-footer-note">{{ t('d_r_limits') }}</p>
+</section>

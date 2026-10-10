@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_ui_macros.html" import page_header, section_header, settings_navigation with context %}
+{% block content %}
+{{ page_header(t('settings_title'),t('ui_settings_help')) }}
+<form method="post" action="{{ url_for('settings') }}" id="setupForm" class="ui-settings-layout" data-ui-sections>
+{{ settings_navigation('settings') }}
+  <div class="ui-settings-content">
+    <section id="bitrixIdentity" class="panel d-pad" data-ui-section>
+      {{ section_header(t('ui_credentials'),t('profile_note')) }}
+      <div class="form-grid">
+        <div class="full"><label for="webhook_url">{{ t('webhook_root') }}</label><div class="inline-control"><input id="webhook_url" name="webhook_url" type="password" value="" placeholder="{{ t('ui_saved_credential') }}" dir="ltr"><button type="button" class="btn secondary" id="testBitrix">{{ t('test_refresh') }}</button></div><div id="connectionStatus" class="status-line" role="status"></div></div>
+        <div><label for="employee_name">{{ t('employee_name') }}</label><input id="employee_name" name="employee_name" value="{{ settings.employee_name }}" required><p class="help">{{ t('employee_name_help') }}</p></div>
+        <div><label for="profileLanguage">{{ t('language') }}</label><select id="profileLanguage" name="ui_language"><option value="ar" {% if lang=='ar' %}selected{% endif %}>العربية</option><option value="en" {% if lang=='en' %}selected{% endif %}>English</option></select></div>
+      </div>
+    </section>
+    <section id="bitrixWorkspace" class="panel d-pad" data-ui-section>
+      {{ section_header(t('ui_workspace_storage'),t('folder_browser_server_note')) }}
+      <div class="form-grid">
+        <div class="full"><label for="storageMode">{{ t('d_storage_mode') }}</label><select id="storageMode" name="storage_mode">{% for mode in ['Shared Folder','Local Folder','Network Share','Obsidian Vault'] %}<option {% if settings.storage_mode|default('Shared Folder') == mode %}selected{% endif %}>{{ mode }}</option>{% endfor %}</select></div>
+        <div class="full"><label for="vault_root">{{ t('shared_vault_root') }}</label><div class="inline-control"><input id="vault_root" name="vault_root" value="{{ settings.vault_root }}" required dir="ltr"><button type="button" class="btn secondary folder-browse-trigger" data-target="vault_root">{{ t('browse') }}</button><button type="button" class="btn secondary" id="testWorkspace">{{ t('d_test_folder') }}</button></div><p id="workspaceTestStatus" role="status"></p></div>
+      </div><label class="toggle-row"><input type="checkbox" name="auto_scaffold" {% if settings.auto_scaffold %}checked{% endif %}><span>{{ t('auto_scaffold') }}</span></label>
+    </section>
+    <section id="bitrixProjects" class="panel d-pad" data-ui-section>
+      {{ section_header(t('selected_bitrix_projects'),t('selected_projects_help')) }}
+      <label for="manualProjects">{{ t('d_manual_projects') }}</label><input id="manualProjects" name="manual_projects" dir="ltr" placeholder="123,456">
+      <div class="project-toolbar"><input type="search" id="projectSearch" placeholder="{{ t('search_projects') }}" aria-label="{{ t('search_projects') }}"><button type="button" class="text-btn" id="selectAll">{{ t('select_all') }}</button><button type="button" class="text-btn" id="clearAll">{{ t('clear') }}</button></div>
+      <div id="projectGrid" class="project-grid compact-grid">{% for p in selected %}<label class="project-option"><input type="checkbox" name="project_id" value="{{ p.id }}" checked><span><strong>{{ p.name }}</strong><small dir="ltr">ID {{ p.id }}</small></span></label>{% endfor %}</div>
+    </section>
+    <section id="bitrixSchedule" class="panel d-pad" data-ui-section>
+      {{ section_header(t('ui_schedule')) }}
+      <div class="form-grid">
+        <div><label for="dailyMinutes">{{ t('d_daily_minutes') }}</label><input id="dailyMinutes" name="planner_minutes" type="number" min="15" max="1440" step="15" value="{{ settings.planner_minutes|default(480) }}" required></div>
+        <div><label for="workdayStart">{{ t('planner_starts') }}</label><input id="workdayStart" type="time" name="workday_start" value="{{ settings.workday_start or '08:00' }}" dir="ltr"></div>
+        <div><label for="syncInterval">{{ t('sync_interval') }}</label><select id="syncInterval" name="sync_interval">{% for value in [60,90,180,300] %}<option value="{{ value }}" {% if settings.sync_interval==value %}selected{% endif %}>{{ value }} {{ t('sec') }}</option>{% endfor %}</select></div>
+        <div><label for="reportDays">{{ t('report_window') }}</label><select id="reportDays" name="report_days">{% for value in [30,90,180] %}<option value="{{ value }}" {% if settings.report_days==value %}selected{% endif %}>{{ value }} {{ t('days') }}</option>{% endfor %}</select></div>
+      </div>
+    </section>
+    <footer class="ui-save-bar"><p class="help">{{ t('ui_settings_save_help') }}</p><button class="btn primary">{{ t('save_settings') }}</button></footer>
+  </div>
+</form>
+{% include '_folder_dialog.html' %}
+{% endblock %}

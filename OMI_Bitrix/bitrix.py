@@ -192,8 +192,8 @@ class BitrixClient:
                 start = int(next_start)
         return list(by_id.values())
 
-    def assigned_tasks(self, user_id, project_ids):
-        return self._task_list_for_filter(project_ids, {"RESPONSIBLE_ID": int(user_id)}, include_completed=False)
+    def assigned_tasks(self, user_id, project_ids, include_completed=False):
+        return self._task_list_for_filter(project_ids, {"RESPONSIBLE_ID": int(user_id)}, include_completed=include_completed)
 
     def supervised_tasks(self, user_id, project_ids, completed_days=90):
         """Tasks where current user is creator and/or observer.

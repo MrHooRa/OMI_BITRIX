@@ -15,6 +15,7 @@
 <nav class="ui-nav-groups" aria-label="{{ t('ui_main_nav') }}">
   <section class="ui-nav-group"><h2>{{ t('ui_work') }}</h2>
     <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint in ['dashboard','task_detail'] %}active{% endif %}" {% if request.endpoint in ['dashboard','task_detail'] %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">▣</span><span>{{ t('my_work') }}</span></a>
+    <a href="{{ url_for('task_calendar') }}" class="nav-link {% if request.endpoint=='task_calendar' %}active{% endif %}" {% if request.endpoint=='task_calendar' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">▦</span><span>{{ t('cal_title') }}</span></a>
     <a href="{{ url_for('diwan.page') }}" class="nav-link {% if request.endpoint=='diwan.page' %}active{% endif %}" {% if request.endpoint=='diwan.page' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">▤</span><span>{{ t('d_diwan') }}</span></a>
     <a href="{{ url_for('supervisor_dashboard') }}" class="nav-link {% if request.endpoint=='supervisor_dashboard' %}active{% endif %}" {% if request.endpoint=='supervisor_dashboard' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">◎</span><span>{{ t('team_work') }}</span></a>
   </section>

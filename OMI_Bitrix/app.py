@@ -493,7 +493,7 @@ def attach_profile():
             return jsonify(ok=False, code="csrf", error=get_text(current_language(), "d_error_csrf")), 403
 
     allowed = {"setup", "api_test_bitrix", "api_projects", "api_folders",
-               "set_language", "static", "health", "settings", "test_workspace", "favicon"}
+               "set_language", "static", "health", "settings", "test_workspace", "favicon", "task_calendar"}
     if request.endpoint and request.endpoint.startswith(("diwan.", "recommendations.")):
         return None
     if request.endpoint and request.endpoint not in allowed and not STORE.configured(pid):
@@ -719,6 +719,46 @@ def dashboard():
         projects=selected_projects(),
         supervisor_count=len(cache.get("supervised", [])),
     )
+
+
+@app.get("/calendar")
+def task_calendar():
+    scope = hashlib.sha256(
+        f"{profile_id()}:{setting('webhook_url', '')}:{current_user_id()}".encode()
+    ).hexdigest()[:24]
+    return render_template("calendar.html", calendar_scope=scope, calendar_configured=STORE.configured(profile_id()),
+                           calendar_today=datetime.now(LOCAL_TZ).date().isoformat())
+
+
+@app.get("/api/calendar")
+def api_calendar():
+    """Read assigned tasks; personal dates and reminders stay in the browser."""
+    try:
+        bx = client()
+        projects = selected_projects()
+        project_ids = [p["id"] for p in projects]
+        if not project_ids:
+            return jsonify(tasks=[], members=[])
+        tasks = bx.assigned_tasks(current_user_id(), project_ids, include_completed=True)
+        members = bx.project_members(project_ids)
+        result = []
+        for task in tasks:
+            deadline = parse_deadline(task.get("deadline"))
+            result.append({
+                "id": str(task["id"]), "title": task.get("title") or "",
+                "project": project_name(task.get("groupId"), projects),
+                "projectId": str(task.get("groupId") or ""),
+                "status": str(task.get("status") or ""),
+                "priority": str(task.get("priority") or "0"),
+                "deadline": deadline.isoformat() if deadline else "",
+                "url": url_for("task_detail", task_id=task["id"]),
+            })
+        return jsonify(tasks=result, members=[
+            {"id": str(m["id"]), "name": m["name"]}
+            for m in members if str(m["id"]) != current_user_id()
+        ])
+    except Exception:
+        return jsonify(error=tr("cal_load_error")), 502
 
 
 @app.route("/search")

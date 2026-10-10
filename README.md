@@ -2,6 +2,10 @@
 
 Internal task analysis, similarity and supervised employee assignment with local multilingual models. Arabic/English, RTL and the existing OMI interface are included.
 
+## Personal calendar in source
+
+The current source adds a personal Bitrix task calendar alongside Diwany and task analysis. Drag tasks to plan days without changing Bitrix deadlines, and keep private colleague follow-up reminders with names visible on task cards. The published v3.10 release remains the original snapshot; use the current source for the calendar. See [calendar usage and checks](OMI_Bitrix/README.md#personal-task-calendar).
+
 ## Download the complete runnable version
 
 Use [Release v3.10](https://github.com/MrHooRa/OMI_BITRIX/releases/tag/v3.10) for the clean **Windows x64 / CPython 3.14** distribution, including both pinned models and offline Python wheels.
@@ -37,6 +41,6 @@ $env:RUN_SEMANTIC_INTEGRATION='1'
 
 Read [application workflows](OMI_Bitrix/README.md), [Arabic algorithm and formulas](OMI_Bitrix/docs/ALGORITHM_AR.md), [automatic domains and models](OMI_Bitrix/docs/AUTOMATIC_DOMAINS_AR.md), [deployment](OMI_Bitrix/docs/admin-guide.md) and [validation limits](OMI_Bitrix/docs/testing.md).
 
-`CHECK_OMI_SERVER.bat` is a read-only Windows diagnostic: it compares core 3.10 files and identifies the server listening on ports 5055/5056. It does not stop processes or change settings.
+`CHECK_OMI_SERVER.bat` is a read-only Windows diagnostic: it compares current source files and identifies the server listening on ports 5055/5056. It does not stop processes or change settings.
 
-The publication preserves the 3.10 runtime implementation. Personal examples in shared documentation are anonymised. Live Diwan acceptance, independently reviewed ranking accuracy and target-machine capacity measurements remain deployment checks.
+The source preserves the 3.10 workflows and adds the personal task calendar. Personal examples in shared documentation are anonymised. Live Diwan acceptance, independently reviewed ranking accuracy and target-machine capacity measurements remain deployment checks.

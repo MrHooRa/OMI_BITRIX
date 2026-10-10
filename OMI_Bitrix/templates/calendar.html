@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='calendar.css', v=2) }}">
+{% if not calendar_configured %}
+<header class="page-head"><div><span class="eyebrow">{{ t('cal_title') }}</span><h1>{{ t('cal_heading') }}</h1></div></header>
+<section class="panel"><h2>{{ t('cal_connect') }}</h2><p>{{ t('cal_connect_hint') }}</p><a class="btn primary" href="{{ url_for('settings') }}#bitrixIdentity">{{ t('settings') }}</a></section>
+{% else %}
+<section id="taskCalendar" data-scope="{{ calendar_scope }}" data-today="{{ calendar_today }}" data-source="{{ url_for('api_calendar') }}">
+  <header class="page-head">
+    <div><span class="eyebrow">{{ t('cal_title') }}</span><h1>{{ t('cal_heading') }}</h1><p>{{ t('cal_intro') }}</p></div>
+    <button class="btn secondary" id="calRefresh" type="button">{{ t('cal_refresh') }}</button>
+  </header>
+  <p class="muted">{{ t('cal_private') }}</p>
+  <div id="calMessage" role="status" aria-live="polite"></div>
+  <div class="panel cal-toolbar">
+    <div class="cal-month-nav"><button class="btn secondary" id="calPrev" aria-label="{{ t('cal_previous') }}">‹</button><h2 id="calMonth" aria-live="polite"></h2><button class="btn secondary" id="calNext" aria-label="{{ t('cal_next') }}">›</button><button class="btn secondary" id="calToday">{{ t('cal_today') }}</button></div>
+    <div class="cal-filters">
+      <input id="calSearch" type="search" placeholder="{{ t('cal_search') }}" aria-label="{{ t('cal_search') }}">
+      <select id="calProject" aria-label="{{ t('selected_projects') }}"><option value="">{{ t('cal_projects') }}</option></select>
+      <select id="calStatus" aria-label="{{ t('cal_all') }}"><option value="all">{{ t('cal_all') }}</option><option value="active">{{ t('cal_active') }}</option><option value="completed">{{ t('cal_completed') }}</option></select>
+      <button id="calUndo" class="btn ghost" disabled>{{ t('cal_undo') }}</button>
+    </div>
+    <small id="calCount" class="muted"></small>
+  </div>
+  <div class="cal-layout">
+    <section class="panel cal-month-panel" aria-labelledby="calMonth"><div id="calGrid" class="cal-grid"></div></section>
+    <aside class="cal-side">
+      <section class="panel cal-side-panel" aria-labelledby="calUndatedHeading">
+        <header class="cal-panel-header">
+          <span class="cal-panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v12H5zM3 12v8h18v-8M8 8h8M8 12h5"/></svg></span>
+          <h2 id="calUndatedHeading">{{ t('cal_undated') }}</h2><span id="calUndatedCount" class="cal-panel-count">0</span>
+        </header>
+        <p class="cal-panel-help">{{ t('cal_undated_hint') }}</p>
+        <div id="calUndated" class="cal-undated" data-date=""></div>
+      </section>
+      <section class="panel cal-side-panel" aria-labelledby="calDueHeading">
+        <header class="cal-panel-header">
+          <span class="cal-panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></span>
+          <h2 id="calDueHeading">{{ t('cal_due') }}</h2><span id="calDueCount" class="cal-panel-count">0</span>
+        </header>
+        <p class="cal-panel-help">{{ t('cal_followup_hint') }}</p><div id="calDue" class="cal-due-list"></div>
+      </section>
+    </aside>
+  </div>
+  <dialog id="calDialog" class="dialog cal-dialog" aria-labelledby="calTaskTitle">
+    <div class="dialog-head"><h2 id="calTaskTitle"></h2><button type="button" class="dialog-close" id="calClose" aria-label="{{ t('cal_close') }}">×</button></div>
+    <p id="calTaskMeta" class="muted"></p><p id="calDialogMessage" role="status"></p>
+    <form id="calPlanForm" class="cal-form">
+      <label for="calPlanDate">{{ t('cal_plan_date') }}</label><input type="date" id="calPlanDate" min="1900-01-01" max="9999-12-31">
+      <div class="cal-actions"><button class="btn primary">{{ t('cal_save') }}</button><button type="button" class="btn secondary" id="calReset">{{ t('cal_reset') }}</button><a class="btn ghost" id="calOpen">{{ t('cal_open') }}</a></div>
+    </form>
+    <hr><h3>{{ t('cal_followups') }}</h3><div id="calReminders"></div>
+    <form id="calReminderForm" class="cal-form">
+      <label for="calColleague">{{ t('cal_colleague') }}</label><select id="calColleague"><option value="">{{ t('cal_choose') }}</option></select>
+      <label for="calName">{{ t('cal_manual') }}</label><input id="calName" maxlength="120" autocomplete="off">
+      <label for="calRemindDate">{{ t('cal_remind_date') }}</label><input type="date" id="calRemindDate" required min="1900-01-01" max="9999-12-31">
+      <label for="calNote">{{ t('cal_note') }}</label><textarea id="calNote" maxlength="1000" rows="2"></textarea>
+      <button class="btn primary">{{ t('cal_add') }}</button>
+    </form>
+  </dialog>
+</section>
+<script defer src="{{ url_for('static', filename='calendar.js', v=2) }}"></script>
+{% endif %}
+{% endblock %}

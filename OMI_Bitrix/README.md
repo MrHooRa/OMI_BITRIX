@@ -18,6 +18,27 @@ For a prepared environment:
 
 Use Ctrl+C in the server window to stop it. A server started in the background by an agent must be stopped by its recorded process ID before starting another instance on the same port.
 
+## Personal task calendar
+
+Open **Calendar** in the workspace navigation after configuring your Bitrix connection and selected projects. It shows your assigned tasks, including completed tasks, with project, status and text filters.
+
+- Drag a task onto a day, or open its card and choose a personal plan date. Bitrix deadlines stay unchanged.
+- Drag a task into the unscheduled area to remove its personal date. **Use Bitrix deadline** restores its original placement; **Undo last change** reverses your most recent edit.
+- Open a card to add a colleague's name, reminder date and note. Names appear on the card; outstanding reminders appear under **Due follow-ups** when due. Mark them done, reopen or remove them from the task.
+
+Dates and reminders belong to the current employee/connection/browser profile and are saved in this browser only. They do not sync across devices or send messages to colleagues. Arabic/RTL, light/dark themes and a mobile agenda are supported. Existing Diwany, analysis and assignment pages remain available.
+
+Calendar checks use fake tasks and never contact Bitrix:
+
+~~~powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p test_calendar.py -v
+# Optional browser checks with Playwright installed:
+.\.venv\Scripts\python.exe tests\test_calendar.py --export output\calendar-fixtures
+$env:CALENDAR_FIXTURES=(Resolve-Path output\calendar-fixtures).Path
+$env:BROWSER_CHANNEL='msedge'
+node tests\calendar_browser.cjs
+~~~
+
 ## Automatic assignment alerts (3.10)
 
 New tasks needing an executor now receive a background recommendation in both Bitrix and Diwan. The alert names the top eligible employee, explains the related completed-work evidence and current workload, and links to a historical example. Pending work alone cannot produce a named recommendation. Changed ranking inputs invalidate the result; unchanged polling reuses it. The supervisor reviews and confirms any assignment. See [the Arabic notification guide](docs/AUTOMATIC_NOTIFICATIONS_AR.md) and [validation](docs/testing.md).

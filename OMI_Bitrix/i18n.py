@@ -783,6 +783,64 @@ TRANSLATIONS["ar"].update({
     "next_quote": "عبارة أخرى",
 })
 
+TRANSLATIONS["en"].update({
+    "cal_title": "Calendar", "cal_heading": "Your tasks, your plan",
+    "cal_connect": "Connect Bitrix to see your tasks",
+    "cal_connect_hint": "Add your personal Bitrix connection and choose projects in Settings, then return to Calendar.",
+    "cal_intro": "Drag tasks to plan your days. Bitrix deadlines stay unchanged.",
+    "cal_private": "Personal dates and colleague reminders are saved only in this browser. They do not sync to other devices. No messages are sent.",
+    "cal_today": "Today", "cal_previous": "Previous month", "cal_next": "Next month",
+    "cal_refresh": "Refresh tasks", "cal_search": "Find a task…", "cal_projects": "All selected projects",
+    "cal_all": "All tasks", "cal_active": "Active tasks", "cal_completed": "Completed tasks",
+    "cal_undated": "Unscheduled", "cal_undated_hint": "Drop a task here to clear its personal date.",
+    "cal_none_undated": "No unscheduled tasks in this view.",
+    "cal_empty": "No matching tasks.", "cal_loading": "Loading your tasks…",
+    "cal_load_error": "Could not load tasks. Check your connection and Bitrix settings, then refresh.",
+    "cal_saved": "Personal plan saved. Bitrix deadline unchanged.",
+    "cal_storage_error": "Your browser could not save this change. Enable local storage and try again.",
+    "cal_storage_invalid": "Saved calendar data could not be read. It has been left untouched; recover it or clear this calendar's browser storage before saving.",
+    "cal_plan_date": "Personal plan date", "cal_deadline": "Bitrix deadline",
+    "cal_reset": "Use Bitrix deadline", "cal_save": "Save plan", "cal_close": "Close",
+    "cal_followups": "Colleague follow-ups", "cal_followup_hint": "Reminders to contact your colleagues.",
+    "cal_colleague": "Colleague", "cal_choose": "Choose a colleague", "cal_manual": "Or enter a colleague's name",
+    "cal_remind_date": "Remind me on", "cal_note": "What to follow up on", "cal_add": "Add reminder",
+    "cal_done": "Mark done", "cal_reopen": "Reopen", "cal_remove": "Remove",
+    "cal_due": "Due follow-ups", "cal_none_due": "No follow-ups due. Add one from a task.",
+    "cal_no_followups": "No reminders for this task.", "cal_need_colleague": "Choose or enter a colleague and a reminder date.",
+    "cal_reminder_saved": "Private reminder saved.", "cal_open": "Open task",
+    "cal_completed_note": "Completed in Bitrix", "cal_high": "High priority",
+    "cal_count": "tasks shown", "cal_plan": "Planned", "cal_undo": "Undo last change",
+})
+TRANSLATIONS["ar"].update({
+    "cal_title": "التقويم", "cal_heading": "مهامك وخطتك",
+    "cal_connect": "اربط حساب Bitrix لعرض مهامك",
+    "cal_connect_hint": "أضف رابط حسابك في Bitrix واختر المشاريع في الإعدادات، ثم عد إلى التقويم.",
+    "cal_intro": "اسحب المهام لتوزيعها على أيامك. مواعيد التسليم في Bitrix لا تتغير.",
+    "cal_private": "مواعيد خطتك وتذكيرات الزملاء محفوظة في هذا المتصفح فقط، ولا تنتقل إلى الأجهزة الأخرى. لا تُرسل أي رسائل.",
+    "cal_today": "اليوم", "cal_previous": "الشهر السابق", "cal_next": "الشهر التالي",
+    "cal_refresh": "تحديث المهام", "cal_search": "ابحث عن مهمة…", "cal_projects": "كل المشاريع المحددة",
+    "cal_all": "كل المهام", "cal_active": "المهام النشطة", "cal_completed": "المهام المكتملة",
+    "cal_undated": "غير مجدولة", "cal_undated_hint": "اسحب مهمة هنا لإلغاء تاريخها الشخصي.",
+    "cal_none_undated": "لا توجد مهام غير مجدولة في هذا العرض.",
+    "cal_empty": "لا توجد مهام مطابقة.", "cal_loading": "جارٍ تحميل مهامك…",
+    "cal_load_error": "تعذر تحميل المهام. تحقق من الاتصال وإعدادات Bitrix ثم حدّث الصفحة.",
+    "cal_saved": "تم حفظ خطتك الشخصية دون تغيير موعد التسليم في Bitrix.",
+    "cal_storage_error": "تعذر حفظ التغيير في المتصفح. فعّل التخزين المحلي ثم حاول مجددًا.",
+    "cal_storage_invalid": "تعذرت قراءة بيانات التقويم المحفوظة. لم تُعدّل البيانات؛ استعدها أو امسح تخزين هذا التقويم في المتصفح قبل الحفظ.",
+    "cal_plan_date": "التاريخ في خطتك الشخصية", "cal_deadline": "موعد التسليم في Bitrix",
+    "cal_reset": "استخدام موعد Bitrix", "cal_save": "حفظ الخطة", "cal_close": "إغلاق",
+    "cal_followups": "متابعة الزملاء", "cal_followup_hint": "تذكيراتك للتواصل مع الزملاء.",
+    "cal_colleague": "الزميل", "cal_choose": "اختر زميلًا", "cal_manual": "أو أدخل اسم الزميل",
+    "cal_remind_date": "ذكّرني بتاريخ", "cal_note": "موضوع المتابعة", "cal_add": "إضافة تذكير",
+    "cal_done": "تمت المتابعة", "cal_reopen": "إعادة فتح", "cal_remove": "حذف",
+    "cal_due": "متابعات مستحقة", "cal_none_due": "لا توجد متابعات مستحقة. أضف تذكيرًا من إحدى المهام.",
+    "cal_no_followups": "لا توجد تذكيرات لهذه المهمة.", "cal_need_colleague": "اختر زميلًا أو أدخل اسمه وحدد تاريخ التذكير.",
+    "cal_reminder_saved": "تم حفظ التذكير الخاص بك.", "cal_open": "فتح المهمة",
+    "cal_completed_note": "مكتملة في Bitrix", "cal_high": "أولوية عالية",
+    "cal_count": "مهمة معروضة", "cal_plan": "مخططة", "cal_undo": "التراجع عن آخر تغيير",
+})
+
+
 def normalize_language(value):
     return "ar" if str(value or "").lower().startswith("ar") else "en"
 
@@ -809,6 +867,7 @@ def js_strings(lang):
         "loading_comments", "no_comments", "comments_error", "show_more_comments",
         "refresh_comments", "comments_count"
     ]
+    keys += [key for key in TRANSLATIONS["en"] if key.startswith("cal_")]
     return {key: get_text(lang, key) for key in keys}
 
 # Diwan and local task intelligence.
